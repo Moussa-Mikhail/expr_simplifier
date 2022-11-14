@@ -9,80 +9,21 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.function.BinaryOperator;
 
-enum TokenType {
-    OPERATOR, NUMBER, VARIABLE, SUBEXPR
-}
+class ExpressionSimplifier {
 
-class LexNode {
-    public final String token;
-    public final TokenType type;
+    public static void main(String... args) throws InvalidExpressionException {
+        var expr = "2*x-(-3)*4";
 
-    public LexNode(String token, TokenType type) {
-        this.token = token;
-        this.type = type;
+        var simplifiedExpr = simplifyExpr(expr);
+
+        System.out.println(simplifiedExpr);
     }
-
-    @Override
-    public String toString() {
-        return token;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public TokenType getType() {
-        return type;
-    }
-}
-
-class SyntaxTree {
-    public final LexNode node;
-    public final SyntaxTree left;
-    public final SyntaxTree right;
-
-    public SyntaxTree(LexNode node) {
-        this.node = node;
-        this.left = null;
-        this.right = null;
-    }
-
-    public SyntaxTree(LexNode node, SyntaxTree left, SyntaxTree right) {
-        this.node = node;
-        this.left = left;
-        this.right = right;
-    }
-
-    @Contract(pure = true)
-    public SyntaxTree(@NotNull SyntaxTree tree) {
-        this.node = tree.node;
-        this.left = tree.left;
-        this.right = tree.right;
-    }
-
-    public boolean isLeaf() {
-        return left == null && right == null;
-    }
-
-    @Override
-    public String toString() {
-        if (isLeaf()) {
-            return node.toString();
-        } else {
-            return String.format("(%s %s %s)", left, node, right);
-        }
-    }
-}
-
-class InvalidExpressionException extends Exception {
-    public InvalidExpressionException(String message) {
-        super(message);
-    }
-}
-
-public class ExpressionSimplifier {
 
     static final LinkedHashMap<String, BinaryOperator<Double>> OPERATOR_TO_FUNCTION = createOperationsMap();
+
+    private ExpressionSimplifier() {
+        throw new IllegalStateException("Utility class");
+    }
 
     private static @NotNull LinkedHashMap<String, BinaryOperator<Double>> createOperationsMap() {
         LinkedHashMap<String, BinaryOperator<Double>> operations = new LinkedHashMap<>();
@@ -94,20 +35,12 @@ public class ExpressionSimplifier {
         return operations;
     }
 
-    public static void main(String... args) throws InvalidExpressionException {
-        var expr = "2*x-(-3)*4";
+    public static String simplifyExpr(String expr) throws InvalidExpressionException {
+        var syntaxTree = parse(expr);
 
-        var exprTree = parse(expr);
+        var simplifiedTree = simplify(syntaxTree);
 
-        System.out.printf("Expression: %s%n", exprTree);
-
-//        var subbedTree = substitute(exprTree, Map.of("x", 2.0));
-
-//        System.out.println(subbedTree);
-
-        var simplifiedTree = simplify(exprTree);
-
-        System.out.println(simplifiedTree);
+        return simplifiedTree.toString();
     }
 
     private static SyntaxTree parse(String expr) throws InvalidExpressionException {
@@ -127,8 +60,6 @@ public class ExpressionSimplifier {
         //like double negatives
         //and 0*x = 0
         //and 1*x = x
-        //and x^0 = 1
-        //and x^1 = x
         //and distributive property
     }
 
@@ -174,7 +105,7 @@ public class ExpressionSimplifier {
         }
     }
 
-    private static ArrayList<SyntaxTree> makeSubTrees(LexNode... lexNodes) throws InvalidExpressionException {
+    private static @NotNull ArrayList<SyntaxTree> makeSubTrees(LexNode @NotNull ... lexNodes) throws InvalidExpressionException {
 
         ArrayList<SyntaxTree> subTrees = new ArrayList<>();
 
@@ -210,7 +141,8 @@ public class ExpressionSimplifier {
 
     }
 
-    private static ArrayList<SyntaxTree> buildTree(ArrayList<SyntaxTree> trees, String operator) {
+    @Contract("_, _ -> new")
+    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, String operator) {
         /*
           This function is used to applied operator precedence to the trees.
           It will replace the operator and its adjacent operands with a new tree.
@@ -219,7 +151,7 @@ public class ExpressionSimplifier {
         Deque<SyntaxTree> treeStack = new ArrayDeque<>();
 
         int idx = 0;
-
+        // TODO: change to for loop
         while (idx < trees.size()) {
 
             SyntaxTree tree = trees.get(idx);
@@ -250,5 +182,4 @@ public class ExpressionSimplifier {
 
         return new ArrayList<>(treeStack);
     }
-
 }
