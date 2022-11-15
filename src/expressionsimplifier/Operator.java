@@ -15,6 +15,17 @@ public enum Operator {
     DIV("/", 1, (a, b) -> a / b),
     ADD("+", 0, Double::sum),
     SUB("-", 0, (a, b) -> a - b);
+    private final String token;
+
+    private final int precedence;
+
+    private final DoubleBinaryOperator function;
+
+    Operator(String token, int precedence, DoubleBinaryOperator function) {
+        this.token = token;
+        this.precedence = precedence;
+        this.function = function;
+    }
 
     public static DoubleBinaryOperator getFunction(String token) throws IllegalArgumentException {
 
@@ -70,19 +81,6 @@ public enum Operator {
 
         return precedenceToTokens;
     }
-
-    private final String token;
-
-    private final int precedence;
-
-    private final DoubleBinaryOperator function;
-
-    Operator(String token, int precedence, DoubleBinaryOperator function) {
-        this.token = token;
-        this.precedence = precedence;
-        this.function = function;
-    }
-
     public boolean isSameToken(String token) {
         return this.token.equals(token);
     }
