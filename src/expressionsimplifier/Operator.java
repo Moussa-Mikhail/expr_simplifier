@@ -15,6 +15,7 @@ public enum Operator {
     DIV("/", 1, (a, b) -> a / b),
     ADD("+", 0, Double::sum),
     SUB("-", 0, (a, b) -> a - b);
+
     private final String token;
 
     private final int precedence;
