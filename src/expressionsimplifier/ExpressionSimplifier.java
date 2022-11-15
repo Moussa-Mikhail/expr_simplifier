@@ -3,42 +3,59 @@ package expressionsimplifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.function.BinaryOperator;
 
 class ExpressionSimplifier {
 
-    public static void main(String... args) throws InvalidExpressionException {
-        var expr = "2*x-(-3)*4";
+    // TODO: move this to own class
+    static final Map<String, BinaryOperator<Double>> OPERATOR_TO_FUNCTION = new HashMap<>();
 
-        var simplifiedExpr = simplifyExpr(expr);
+    static {
+        OPERATOR_TO_FUNCTION.put("^", Math::pow);
+
+        OPERATOR_TO_FUNCTION.put("*", (a, b) -> a * b);
+
+        OPERATOR_TO_FUNCTION.put("/", (a, b) -> a / b);
+
+        OPERATOR_TO_FUNCTION.put("+", Double::sum);
+
+        OPERATOR_TO_FUNCTION.put("-", (a, b) -> a - b);
+    }
+
+    public static void main(String @NotNull ... args) throws InvalidExpressionException {
+
+        String[] variables = new String[args.length - 1];
+
+        if (args.length > 1) System.arraycopy(args, 1, variables, 0, args.length - 1);
+
+        final Map<String, String> variableToValue = parseInputVariables(variables);
+
+        var expr = args[0];
+
+        var simplifiedExpr = simplifyExpr(expr, variableToValue);
 
         System.out.println(simplifiedExpr);
     }
 
-    static final LinkedHashMap<String, BinaryOperator<Double>> OPERATOR_TO_FUNCTION = createOperationsMap();
+    private static @NotNull Map<String, String> parseInputVariables(String @NotNull [] variables) {
 
-    private ExpressionSimplifier() {
-        throw new IllegalStateException("Utility class");
+        Map<String, String> variableToValue = new HashMap<>();
+
+        for (String input : variables) {
+
+            String[] split = input.split("=");
+
+            variableToValue.put(split[0], split[1]);
+        }
+
+        return variableToValue;
     }
 
-    private static @NotNull LinkedHashMap<String, BinaryOperator<Double>> createOperationsMap() {
-        LinkedHashMap<String, BinaryOperator<Double>> operations = new LinkedHashMap<>();
-        operations.put("^", Math::pow);
-        operations.put("*", (a, b) -> a * b);
-        operations.put("/", (a, b) -> a / b);
-        operations.put("+", Double::sum);
-        operations.put("-", (a, b) -> a - b);
-        return operations;
-    }
-
-    public static String simplifyExpr(String expr) throws InvalidExpressionException {
+    public static String simplifyExpr(String expr, Map<String, String> variableToValue) throws InvalidExpressionException {
         var syntaxTree = parse(expr);
 
-        var simplifiedTree = simplify(syntaxTree);
+        var simplifiedTree = simplify(syntaxTree, variableToValue);
 
         return simplifiedTree.toString();
     }
@@ -52,6 +69,36 @@ class ExpressionSimplifier {
         return buildTree(subTrees);
     }
 
+    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree, Map<String, String> variableToValue) {
+        var subbedTree = makeSubstitutions(tree, variableToValue);
+
+        return simplify(subbedTree);
+    }
+
+    private static SyntaxTree makeSubstitutions(SyntaxTree tree, Map<String, String> variableToValue) {
+        if (tree == null) {
+            return null;
+        }
+
+        var subbedLeft = makeSubstitutions(tree.left, variableToValue);
+
+        var subbedRight = makeSubstitutions(tree.right, variableToValue);
+
+        String token = tree.node.token;
+
+        LexNode node;
+
+        if (variableToValue.containsKey(token)) {
+            var newToken = variableToValue.get(token);
+
+            node = new LexNode(newToken, TokenType.NUMBER);
+        } else {
+            node = tree.node;
+        }
+
+        return new SyntaxTree(node, subbedLeft, subbedRight);
+    }
+
     private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree) {
 
         return foldConstants(tree);
@@ -62,6 +109,7 @@ class ExpressionSimplifier {
         //and 1*x = x
         //and distributive property
     }
+
 
     @NotNull
     private static SyntaxTree foldConstants(@NotNull SyntaxTree tree) {
@@ -130,10 +178,18 @@ class ExpressionSimplifier {
 
     private static SyntaxTree buildTree(ArrayList<SyntaxTree> subTrees) {
 
-        for (var operator : OPERATOR_TO_FUNCTION.keySet()) {
+        final List<Set<String>> operatorPrecedence = new ArrayList<>();
+
+
+        operatorPrecedence.add(Set.of("^"));
+        operatorPrecedence.add(Set.of("*", "/"));
+        operatorPrecedence.add(Set.of("+", "-"));
+
+
+        for (var operators : operatorPrecedence) {
             // Building the complete tree from subtrees must respect operator precedence.
 
-            subTrees = buildTree(subTrees, operator);
+            subTrees = buildTree(subTrees, operators);
 
         }
 
@@ -142,44 +198,41 @@ class ExpressionSimplifier {
     }
 
     @Contract("_, _ -> new")
-    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, String operator) {
+    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, Set<String> operators) {
         /*
-          This function is used to applied operator precedence to the trees.
+          This function is used to apply operator precedence to the trees.
           It will replace the operator and its adjacent operands with a new tree.
          */
 
-        Deque<SyntaxTree> treeStack = new ArrayDeque<>();
+        Deque<SyntaxTree> operandsStack = new ArrayDeque<>();
 
-        int idx = 0;
-        // TODO: change to for loop
-        while (idx < trees.size()) {
+        SyntaxTree operatorTree = null;
 
-            SyntaxTree tree = trees.get(idx);
+        for (SyntaxTree tree : trees) {
 
-            boolean isOperator = tree.node.type == TokenType.OPERATOR;
+            boolean isCorrectOperator = operators.contains(tree.node.token);
 
-            boolean isCorrectOperator = tree.node.token.equals(operator);
+            if (isCorrectOperator && tree.isLeaf()) {
 
-            if (isOperator && isCorrectOperator && tree.isLeaf()) {
+                operatorTree = tree;
 
-                SyntaxTree leftTree = trees.get(idx - 1);
+            } else if (operatorTree != null) {
 
-                SyntaxTree rightTree = trees.get(idx + 1);
+                var leftTree = operandsStack.removeLast();
 
-                var newTree = new SyntaxTree(tree.node, leftTree, rightTree);
+                SyntaxTree newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
 
-                treeStack.pop();
+                operandsStack.addLast(newTree);
 
-                treeStack.push(newTree);
+                operatorTree = null;
 
-                idx++;
             } else {
-                treeStack.push(tree);
-            }
 
-            idx++;
+                operandsStack.addLast(tree);
+
+            }
         }
 
-        return new ArrayList<>(treeStack);
+        return new ArrayList<>(operandsStack);
     }
 }
