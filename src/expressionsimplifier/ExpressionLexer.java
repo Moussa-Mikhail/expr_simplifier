@@ -3,6 +3,7 @@ package expressionsimplifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.function.Predicate;
 
 public final class ExpressionLexer {
 
@@ -128,29 +129,27 @@ public final class ExpressionLexer {
 
     private static int findEndOfNumber(@NotNull String expr, int startIdx) {
 
-        for (int idx = startIdx; idx < expr.length(); idx++) {
-
-            char chr = expr.charAt(idx);
-
-            if (!Character.isDigit(chr)) {
-                return idx - 1;
-            }
-        }
-
-        return expr.length() - 1;
+        return findEndOfExprComponent(expr, startIdx, Character::isDigit);
     }
 
     private static int findEndOfVariable(@NotNull String expr, int startIdx) {
 
-        for (int idx = startIdx; idx < expr.length(); idx++) {
-
-            char chr = expr.charAt(idx);
-
-            if (!(Character.isAlphabetic(chr) || Character.isDigit(chr))) {
-                return idx - 1;
-            }
-        }
-
-        return expr.length() - 1;
+        return findEndOfExprComponent(expr, startIdx, chr -> Character.isAlphabetic(chr) || Character.isDigit(chr));
     }
+
+    private static int findEndOfExprComponent(@NotNull String expr, int startIdx, Predicate<Character> predicate) {
+
+    	for (int idx = startIdx; idx < expr.length(); idx++) {
+
+    		char chr = expr.charAt(idx);
+
+    		if (!predicate.test(chr)) {
+    			return idx - 1;
+    		}
+    	}
+
+    	return expr.length() - 1;
+    }
+
+
 }
