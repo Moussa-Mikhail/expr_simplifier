@@ -5,24 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BinaryOperator;
 
 class ExpressionSimplifier {
-
-    // TODO: move this to own class
-    static final Map<String, BinaryOperator<Double>> OPERATOR_TO_FUNCTION = new HashMap<>();
-
-    static {
-        OPERATOR_TO_FUNCTION.put("^", Math::pow);
-
-        OPERATOR_TO_FUNCTION.put("*", (a, b) -> a * b);
-
-        OPERATOR_TO_FUNCTION.put("/", (a, b) -> a / b);
-
-        OPERATOR_TO_FUNCTION.put("+", Double::sum);
-
-        OPERATOR_TO_FUNCTION.put("-", (a, b) -> a - b);
-    }
 
     public static void main(String @NotNull ... args) throws InvalidExpressionException {
 
@@ -33,6 +17,10 @@ class ExpressionSimplifier {
         final Map<String, String> variableToValue = parseInputVariables(variables);
 
         var expr = args[0];
+
+        if (expr.isEmpty()) {
+            return;
+        }
 
         var simplifiedExpr = simplifyExpr(expr, variableToValue);
 
@@ -146,7 +134,7 @@ class ExpressionSimplifier {
 
         var right = Double.parseDouble(rightToken);
 
-        double res = OPERATOR_TO_FUNCTION.get(operator).apply(left, right);
+        double res = Operator.getFunction(operator).applyAsDouble(left, right);
 
         if (res == Math.floor(res)) {
 
@@ -159,7 +147,7 @@ class ExpressionSimplifier {
         }
     }
 
-    private static @NotNull ArrayList<SyntaxTree> makeSubTrees(LexNode @NotNull ... lexNodes) throws InvalidExpressionException {
+    private static @NotNull ArrayList<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
 
         ArrayList<SyntaxTree> subTrees = new ArrayList<>();
 
@@ -183,19 +171,16 @@ class ExpressionSimplifier {
         return subTrees;
     }
 
-    private static SyntaxTree buildTree(ArrayList<SyntaxTree> subTrees) {
+    private static SyntaxTree buildTree(@NotNull ArrayList<SyntaxTree> subTrees) {
 
-        final List<Set<String>> operatorPrecedence = new ArrayList<>();
-
-
-        operatorPrecedence.add(Set.of("^"));
-        operatorPrecedence.add(Set.of("*", "/"));
-        operatorPrecedence.add(Set.of("+", "-"));
+        if (subTrees.size() == 1) {
+            return subTrees.get(0);
+        }
 
         var newSubTrees = new ArrayList<>(subTrees);
 
 
-        for (var operators : operatorPrecedence) {
+        for (Set<String> operators : Operator.getPrecedenceToTokens().values()) {
             // Building the complete tree from subtrees must respect operator precedence.
 
             newSubTrees = buildTree(newSubTrees, operators);
@@ -219,9 +204,11 @@ class ExpressionSimplifier {
 
         for (SyntaxTree tree : trees) {
 
+            boolean isOperator = tree.node.type == TokenType.OPERATOR;
+
             boolean isCorrectOperator = operators.contains(tree.node.token);
 
-            if (isCorrectOperator && tree.isLeaf()) {
+            if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
                 operatorTree = tree;
 

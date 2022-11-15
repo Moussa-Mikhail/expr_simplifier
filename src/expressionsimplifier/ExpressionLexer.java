@@ -10,7 +10,7 @@ public final class ExpressionLexer {
         throw new IllegalStateException("Utility class");
     }
 
-    static LexNode @NotNull [] lexExpression(String expr) throws InvalidExpressionException {
+    static @NotNull ArrayList<LexNode> lexExpression(@NotNull String expr) throws InvalidExpressionException {
 
         var cleanExpr = expr.replaceAll("\\s+", "");
 
@@ -54,7 +54,7 @@ public final class ExpressionLexer {
 
                 continue;
 
-            } else if (chr == '+' || chr == '*' || chr == '/' || chr == '-') {
+            } else if (Operator.getOperatorTokens().contains(String.valueOf(chr))) {
 
                 tokenExpr = String.valueOf(chr);
 
@@ -75,6 +75,8 @@ public final class ExpressionLexer {
                 idx = endIdx + 1;
 
             } else if (Character.isAlphabetic(chr)) {
+				
+				// TODO: handle implicit multiplication
 
                 int endIdx = findEndOfVariable(cleanExpr, idx);
 
@@ -98,7 +100,7 @@ public final class ExpressionLexer {
 
         }
 
-        return lexNodes.toArray(new LexNode[0]);
+        return lexNodes;
 
     }
 
