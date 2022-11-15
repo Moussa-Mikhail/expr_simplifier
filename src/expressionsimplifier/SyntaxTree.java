@@ -2,11 +2,12 @@ package expressionsimplifier;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class SyntaxTree {
     public final LexNode node;
-    public final SyntaxTree left;
-    public final SyntaxTree right;
+    public final @Nullable SyntaxTree left;
+    public final @Nullable SyntaxTree right;
 
     public SyntaxTree(LexNode node) {
         this.node = node;
@@ -14,7 +15,7 @@ class SyntaxTree {
         this.right = null;
     }
 
-    public SyntaxTree(LexNode node, SyntaxTree left, SyntaxTree right) {
+    public SyntaxTree(@NotNull LexNode node, @Nullable SyntaxTree left, @Nullable SyntaxTree right) {
         this.node = node;
         this.left = left;
         this.right = right;

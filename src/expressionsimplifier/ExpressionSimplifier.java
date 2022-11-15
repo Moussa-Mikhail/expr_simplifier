@@ -2,6 +2,7 @@ package expressionsimplifier;
 
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
@@ -52,7 +53,7 @@ class ExpressionSimplifier {
         return variableToValue;
     }
 
-    public static String simplifyExpr(String expr, Map<String, String> variableToValue) throws InvalidExpressionException {
+    public static String simplifyExpr(@NotNull String expr, @NotNull Map<String, String> variableToValue) throws InvalidExpressionException {
         var syntaxTree = parse(expr);
 
         var simplifiedTree = simplify(syntaxTree, variableToValue);
@@ -60,7 +61,7 @@ class ExpressionSimplifier {
         return simplifiedTree.toString();
     }
 
-    private static SyntaxTree parse(String expr) throws InvalidExpressionException {
+    private static SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
 
         var lexNodes = ExpressionLexer.lexExpression(expr);
 
@@ -69,15 +70,17 @@ class ExpressionSimplifier {
         return buildTree(subTrees);
     }
 
-    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree, Map<String, String> variableToValue) {
+    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
+
         var subbedTree = makeSubstitutions(tree, variableToValue);
 
         return simplify(subbedTree);
     }
 
-    private static SyntaxTree makeSubstitutions(SyntaxTree tree, Map<String, String> variableToValue) {
-        if (tree == null) {
-            return null;
+    private static SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
+
+        if (tree == null || tree.isLeaf()) {
+            return tree;
         }
 
         var subbedLeft = makeSubstitutions(tree.left, variableToValue);
@@ -89,6 +92,7 @@ class ExpressionSimplifier {
         LexNode node;
 
         if (variableToValue.containsKey(token)) {
+
             var newToken = variableToValue.get(token);
 
             node = new LexNode(newToken, TokenType.NUMBER);
@@ -120,8 +124,10 @@ class ExpressionSimplifier {
 
         var treeCopy = new SyntaxTree(tree);
 
+        assert treeCopy.left != null;
         SyntaxTree left = simplify(treeCopy.left);
 
+        assert treeCopy.right != null;
         SyntaxTree right = simplify(treeCopy.right);
 
         if (left.node.type == TokenType.NUMBER && right.node.type == TokenType.NUMBER) {
@@ -134,7 +140,7 @@ class ExpressionSimplifier {
         return new SyntaxTree(treeCopy.node, left, right);
     }
 
-    private static @NotNull String evalTree(String operator, String leftToken, String rightToken) {
+    private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
 
         var left = Double.parseDouble(leftToken);
 
@@ -198,7 +204,7 @@ class ExpressionSimplifier {
     }
 
     @Contract("_, _ -> new")
-    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, Set<String> operators) {
+    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, @NotNull Set<String> operators) {
         /*
           This function is used to apply operator precedence to the trees.
           It will replace the operator and its adjacent operands with a new tree.
