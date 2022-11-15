@@ -39,7 +39,7 @@ class ExpressionSimplifier {
         System.out.println(simplifiedExpr);
     }
 
-    private static @NotNull Map<String, String> parseInputVariables(String @NotNull [] variables) {
+    private static @NotNull Map<String, String> parseInputVariables(String @NotNull ... variables) {
 
         Map<String, String> variableToValue = new HashMap<>();
 
@@ -79,12 +79,14 @@ class ExpressionSimplifier {
 
     private static SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
 
-        if (tree == null || tree.isLeaf()) {
-            return tree;
+        if (tree == null) {
+            return null;
         }
 
+        assert tree.left != null;
         var subbedLeft = makeSubstitutions(tree.left, variableToValue);
 
+        assert tree.right != null;
         var subbedRight = makeSubstitutions(tree.right, variableToValue);
 
         String token = tree.node.token;
@@ -122,22 +124,20 @@ class ExpressionSimplifier {
             return tree;
         }
 
-        var treeCopy = new SyntaxTree(tree);
+        assert tree.left != null;
+        SyntaxTree left = simplify(tree.left);
 
-        assert treeCopy.left != null;
-        SyntaxTree left = simplify(treeCopy.left);
-
-        assert treeCopy.right != null;
-        SyntaxTree right = simplify(treeCopy.right);
+        assert tree.right != null;
+        SyntaxTree right = simplify(tree.right);
 
         if (left.node.type == TokenType.NUMBER && right.node.type == TokenType.NUMBER) {
 
-            var newToken = evalTree(treeCopy.node.token, left.node.token, right.node.token);
+            var newToken = evalTree(tree.node.token, left.node.token, right.node.token);
 
             return new SyntaxTree(new LexNode(newToken, TokenType.NUMBER));
         }
 
-        return new SyntaxTree(treeCopy.node, left, right);
+        return new SyntaxTree(tree.node, left, right);
     }
 
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
@@ -163,14 +163,15 @@ class ExpressionSimplifier {
 
         ArrayList<SyntaxTree> subTrees = new ArrayList<>();
 
-        for (LexNode lexNode : lexNodes) {
+        for (var lexNode : lexNodes) {
+
             if (lexNode.getType() == TokenType.SUBEXPR) {
 
-                String subExpr = lexNode.getToken();
+                var subExpr = lexNode.getToken();
 
-                subExpr = subExpr.substring(1, subExpr.length() - 1); // Remove parentheses
+                var subExprNoParens = subExpr.substring(1, subExpr.length() - 1); // Remove parentheses
 
-                subTrees.add(parse(subExpr));
+                subTrees.add(parse(subExprNoParens));
 
             } else {
 
@@ -191,15 +192,17 @@ class ExpressionSimplifier {
         operatorPrecedence.add(Set.of("*", "/"));
         operatorPrecedence.add(Set.of("+", "-"));
 
+        var newSubTrees = new ArrayList<>(subTrees);
+
 
         for (var operators : operatorPrecedence) {
             // Building the complete tree from subtrees must respect operator precedence.
 
-            subTrees = buildTree(subTrees, operators);
+            newSubTrees = buildTree(newSubTrees, operators);
 
         }
 
-        return subTrees.get(0);
+        return newSubTrees.get(0);
 
     }
 
@@ -210,7 +213,7 @@ class ExpressionSimplifier {
           It will replace the operator and its adjacent operands with a new tree.
          */
 
-        Deque<SyntaxTree> operandsStack = new ArrayDeque<>();
+        Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
 
         SyntaxTree operatorTree = null;
 
@@ -224,21 +227,21 @@ class ExpressionSimplifier {
 
             } else if (operatorTree != null) {
 
-                var leftTree = operandsStack.removeLast();
+                var leftTree = subTreesStack.removeLast();
 
                 SyntaxTree newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
 
-                operandsStack.addLast(newTree);
+                subTreesStack.addLast(newTree);
 
                 operatorTree = null;
 
             } else {
 
-                operandsStack.addLast(tree);
+                subTreesStack.addLast(tree);
 
             }
         }
 
-        return new ArrayList<>(operandsStack);
+        return new ArrayList<>(subTreesStack);
     }
 }
