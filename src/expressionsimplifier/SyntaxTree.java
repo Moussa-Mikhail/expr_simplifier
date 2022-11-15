@@ -1,6 +1,5 @@
 package expressionsimplifier;
 
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,13 +18,6 @@ class SyntaxTree {
         this.node = node;
         this.left = left;
         this.right = right;
-    }
-
-    @Contract(pure = true)
-    public SyntaxTree(@NotNull SyntaxTree tree) {
-        this.node = tree.node;
-        this.left = tree.left;
-        this.right = tree.right;
     }
 
     public boolean isLeaf() {
