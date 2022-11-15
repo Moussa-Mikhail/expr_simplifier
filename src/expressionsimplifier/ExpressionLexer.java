@@ -144,7 +144,7 @@ public class ExpressionLexer {
 
             char chr = expr.charAt(idx);
 
-            if (!Character.isAlphabetic(chr)) {
+            if (!(Character.isAlphabetic(chr) || Character.isDigit(chr))) {
                 return idx - 1;
             }
         }
