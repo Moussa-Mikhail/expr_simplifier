@@ -2,10 +2,7 @@ package expressionsimplifier;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.DoubleBinaryOperator;
 
 public enum Operator {
@@ -66,7 +63,7 @@ public enum Operator {
         return tokens;
     }
 
-    public static @NotNull Map<Integer, Set<String>> getPrecedenceToTokens () {
+    public static @NotNull Collection<Set<String>> tokensGroupedByPrecedenceDecreasingOrder() {
 
         LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
 
@@ -80,7 +77,7 @@ public enum Operator {
             precedenceToTokens.get(precedence).add(token);
         }
 
-        return precedenceToTokens;
+        return precedenceToTokens.values();
     }
     public boolean isSameToken(String token) {
         return this.token.equals(token);

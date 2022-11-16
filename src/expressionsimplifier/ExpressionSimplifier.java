@@ -180,7 +180,7 @@ class ExpressionSimplifier {
         var newSubTrees = new ArrayList<>(subTrees);
 
 
-        for (Set<String> operators : Operator.getPrecedenceToTokens().values()) {
+        for (Set<String> operators : Operator.tokensGroupedByPrecedenceDecreasingOrder()) {
             // Building the complete tree from subtrees must respect operator precedence.
 
             newSubTrees = buildTree(newSubTrees, operators);
