@@ -76,8 +76,14 @@ public final class ExpressionLexer {
                 idx = endIdx + 1;
 
             } else if (Character.isAlphabetic(chr)) {
-				
-				// TODO: handle implicit multiplication
+
+                if (tokenType == TokenType.NUMBER) {
+
+                    tokenType = TokenType.OPERATOR;
+
+                    lexNodes.add(new LexNode("*", tokenType));
+
+                }
 
                 int endIdx = findEndOfVariable(cleanExpr, idx);
 
@@ -129,7 +135,7 @@ public final class ExpressionLexer {
 
     private static int findEndOfNumber(@NotNull String expr, int startIdx) {
 
-        return findEndOfExprComponent(expr, startIdx, Character::isDigit);
+        return findEndOfExprComponent(expr, startIdx, chr -> Character.isDigit(chr) || chr == '.');
     }
 
     private static int findEndOfVariable(@NotNull String expr, int startIdx) {
