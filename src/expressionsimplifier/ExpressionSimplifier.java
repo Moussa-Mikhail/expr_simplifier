@@ -24,11 +24,13 @@ class ExpressionSimplifier {
 
         var expr = args[0];
 
-        if (expr.isEmpty()) {
+        var cleanExpr = expr.replaceAll("\\s+", "");
+
+        if (cleanExpr.isEmpty()) {
             return;
         }
 
-        var simplifiedExpr = simplifyExpr(expr, variableToValue);
+        var simplifiedExpr = simplifyExpr(cleanExpr, variableToValue);
 
         System.out.println(simplifiedExpr);
     }

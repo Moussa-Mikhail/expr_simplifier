@@ -14,8 +14,6 @@ public final class ExpressionLexer {
     @SuppressWarnings("java:S3776")
     static @NotNull ArrayList<LexNode> lexExpression(@NotNull String expr) throws InvalidExpressionException {
 
-        var cleanExpr = expr.replaceAll("\\s+", "");
-
         ArrayList<LexNode> lexNodes = new ArrayList<>();
 
         String tokenExpr = "";
@@ -24,9 +22,9 @@ public final class ExpressionLexer {
 
         int idx = 0;
 
-        while (idx < cleanExpr.length()) {
+        while (idx < expr.length()) {
 
-            char chr = cleanExpr.charAt(idx);
+            char chr = expr.charAt(idx);
 
             if (chr == '(') {
 
@@ -37,13 +35,13 @@ public final class ExpressionLexer {
                     lexNodes.add(new LexNode("*", tokenType));
                 }
 
-                int endIdx = findClosingParen(cleanExpr, idx);
+                int endIdx = findClosingParen(expr, idx);
 
                 if (endIdx == -1) {
                     throw new InvalidExpressionException("Unmatched opening parenthesis");
                 }
 
-                tokenExpr = cleanExpr.substring(idx, endIdx + 1);
+                tokenExpr = expr.substring(idx, endIdx + 1);
 
                 tokenType = TokenType.SUBEXPR;
 
@@ -73,9 +71,9 @@ public final class ExpressionLexer {
 
             } else if (Character.isDigit(chr)) {
 
-                int endIdx = findEndOfNumber(cleanExpr, idx);
+                int endIdx = findEndOfNumber(expr, idx);
 
-                String numberStr = cleanExpr.substring(idx, endIdx + 1);
+                String numberStr = expr.substring(idx, endIdx + 1);
 
                 tokenExpr = tokenExpr.concat(numberStr);
 
@@ -92,9 +90,9 @@ public final class ExpressionLexer {
                     lexNodes.add(new LexNode("*", tokenType));
                 }
 
-                int endIdx = findEndOfVariable(cleanExpr, idx);
+                int endIdx = findEndOfVariable(expr, idx);
 
-                String variableStr = cleanExpr.substring(idx, endIdx + 1);
+                String variableStr = expr.substring(idx, endIdx + 1);
 
                 tokenExpr = tokenExpr.concat(variableStr);
 
