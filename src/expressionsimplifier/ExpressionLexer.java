@@ -1,17 +1,18 @@
 package expressionsimplifier;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
 public final class ExpressionLexer {
 
-    private final String expr;
+    private final @NotNull String expr;
 
-    private String token = "";
+    private @NotNull String token = "";
 
-    private TokenType prevTokenType = null;
+    private @Nullable TokenType prevTokenType = null;
 
     private int idx = 0;
 
