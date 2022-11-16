@@ -2,8 +2,15 @@ package expressionsimplifier;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Set;
 import java.util.function.DoubleBinaryOperator;
+
+/**
+ * @author Moussa
+ */
 
 public enum Operator {
     // Operators must be ordered by decreasing precedence.
@@ -25,9 +32,10 @@ public enum Operator {
         this.function = function;
     }
 
-    public static DoubleBinaryOperator getFunction(String token) throws IllegalArgumentException {
 
-        for (Operator op : Operator.values()) {
+    public static DoubleBinaryOperator getFunction(String token) {
+
+        for (final var op : Operator.values()) {
 
             if (op.isSameToken(token)) {
 
@@ -39,9 +47,9 @@ public enum Operator {
         throw new IllegalArgumentException("Invalid operator token: " + token);
     }
 
-    public static int getPrecedence(String token) throws IllegalArgumentException {
+    public static int getPrecedence(String token) {
 
-        for (Operator op : Operator.values()) {
+        for (final var op : Operator.values()) {
 
             if (op.isSameToken(token)) {
 
@@ -50,27 +58,30 @@ public enum Operator {
             }
         }
 
-        throw new IllegalArgumentException("Invalid operator token: " + token);
+        return -1;
     }
 
     public static @NotNull Set<String> getOperatorTokens() {
-        Set<String> tokens = new HashSet<>();
 
-        for (Operator op : Operator.values()) {
+        final Set<String> tokens = new HashSet<>();
+
+        for (final var op : Operator.values()) {
+
             tokens.add(op.token);
         }
 
         return tokens;
     }
 
-    public static @NotNull Collection<Set<String>> tokensGroupedByPrecedenceDecreasingOrder() {
+    public static @NotNull Collection<Set<String>> tokensGroupedByPrecedence() {
 
-        LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
+        final LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
 
-        for (Operator op : Operator.values()) {
-            var precedence = op.precedence;
+        for (final var op : Operator.values()) {
 
-            String token = op.token;
+            final var precedence = op.precedence;
+
+            final var token = op.token;
 
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
 
@@ -79,6 +90,7 @@ public enum Operator {
 
         return precedenceToTokens.values();
     }
+
     public boolean isSameToken(String token) {
         return this.token.equals(token);
     }

@@ -1,6 +1,6 @@
 package expressionsimplifier;
 
-class LexNode {
+final class LexNode {
     public final String token;
     public final TokenType type;
 

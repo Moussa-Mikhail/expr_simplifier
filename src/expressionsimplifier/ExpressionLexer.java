@@ -4,15 +4,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Predicate;
 
+
+/**
+ * @author Moussa
+ */
 public final class ExpressionLexer {
 
-    final @NotNull ArrayList<LexNode> lexNodes = new ArrayList<>();
+    private static final char MINUS_SIGN = '-';
+
+    private static final char OPEN_PAREN = '(';
+
+    private static final char CLOSE_PAREN = ')';
+    private final @NotNull List<LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";
-    private @Nullable TokenType prevTokenType = null;
-    private int idx = 0;
+    private @Nullable TokenType prevTokenType;
+
+    /**
+     *
+     */
+    private int currPos;
 
     public ExpressionLexer(@NotNull String expr) {
 
@@ -20,43 +34,52 @@ public final class ExpressionLexer {
 
     }
 
-    void lexExpression() throws InvalidExpressionException {
+    public @NotNull List<LexNode> getLexNodes() {
+        return lexNodes;
+    }
 
-        while (idx < expr.length()) {
+    public void lexExpression() throws InvalidExpressionException {
 
-            char chr = expr.charAt(idx);
+        while (currPos < expr.length()) {
 
-            if (chr == '(') {
+            final char chr = expr.charAt(currPos);
+
+            final boolean isAtBeginning = prevTokenType == null;
+
+            final boolean isPrevOperator = prevTokenType == TokenType.OPERATOR;
+
+            if (chr == OPEN_PAREN) {
 
                 lexSubExpr();
 
-            } else if (chr == ')') {
+            } else if (chr == CLOSE_PAREN) {
 
                 throw new InvalidExpressionException("Unmatched closing parenthesis");
 
-            } else if (chr == '-' && (prevTokenType == TokenType.OPERATOR || prevTokenType == null)) {
+            } else //noinspection AlibabaAvoidComplexCondition
+                if (chr == MINUS_SIGN && (isPrevOperator || isAtBeginning)) {
 
-                token = String.valueOf(chr);
+                    token = String.valueOf(chr);
 
-                idx++;
+                    currPos++;
 
-                continue;
+                    continue;
 
-            } else if (Operator.getOperatorTokens().contains(String.valueOf(chr))) {
+                } else if (Operator.getOperatorTokens().contains(String.valueOf(chr))) {
 
-                lexOperator(chr);
+                    lexOperator(chr);
 
-            } else if (Character.isDigit(chr)) {
+                } else if (Character.isDigit(chr)) {
 
-                lexNumber();
+                    lexNumber();
 
-            } else if (Character.isAlphabetic(chr)) {
+                } else if (Character.isAlphabetic(chr)) {
 
-                lexVariable();
+                    lexVariable();
 
-            } else {
-                throw new InvalidExpressionException("Invalid character: " + chr);
-            }
+                } else {
+                    throw new InvalidExpressionException("Invalid character: " + chr);
+                }
 
             lexNodes.add(new LexNode(token, prevTokenType));
 
@@ -72,7 +95,7 @@ public final class ExpressionLexer {
 
             insertMultiplicationOp();
 
-        } else if (token.equals("-")) {
+        } else if (token.equals(String.valueOf(MINUS_SIGN))) {
 
             lexNodes.add(new LexNode("-1", TokenType.NUMBER));
 
@@ -85,18 +108,18 @@ public final class ExpressionLexer {
             throw new InvalidExpressionException("Invalid expression.");
         }
 
-        int endIdx = findClosingParen(idx);
+        final int endIdx = findClosingParen(currPos);
 
         if (endIdx == -1) {
 
             throw new InvalidExpressionException("Unmatched opening parenthesis");
         }
 
-        token = expr.substring(idx, endIdx + 1);
+        token = expr.substring(currPos, endIdx + 1);
 
         prevTokenType = TokenType.SUBEXPR;
 
-        idx = endIdx + 1;
+        currPos = endIdx + 1;
     }
 
     private void insertMultiplicationOp() {
@@ -106,26 +129,24 @@ public final class ExpressionLexer {
     }
 
     private int findClosingParen(int startIdx) {
-//        This function assumes that the first character at startIdx is an opening parenthesis.
-//        It returns the index of the closing parenthesis. -1 if it is unmatched.
 
         int parenCount = 0;
 
-        for (int idx_ = startIdx; idx_ < expr.length(); idx_++) {
+        for (int idx = startIdx; idx < expr.length(); idx++) {
 
-            char chr = expr.charAt(idx_);
+            final char chr = expr.charAt(idx);
 
-            if (chr == '(') {
+            if (chr == OPEN_PAREN) {
 
                 parenCount++;
 
-            } else if (chr == ')') {
+            } else if (chr == CLOSE_PAREN) {
 
                 parenCount--;
             }
             if (parenCount == 0) {
 
-                return idx_;
+                return idx;
             }
         }
 
@@ -138,18 +159,18 @@ public final class ExpressionLexer {
 
         prevTokenType = TokenType.OPERATOR;
 
-        idx++;
+        currPos++;
     }
 
     private void lexNumber() {
 
-        int endIdx = findEndOfNumber(idx);
+        final int endIdx = findEndOfNumber(currPos);
 
-        String numberStr = expr.substring(idx, endIdx + 1);
+        final String numberStr = expr.substring(currPos, endIdx + 1);
 
-        if (token.equals("-")) {
+        if (token.equals(String.valueOf(MINUS_SIGN))) {
 
-            token = "-" + numberStr;
+            token = MINUS_SIGN + numberStr;
 
         } else {
 
@@ -158,7 +179,7 @@ public final class ExpressionLexer {
 
         prevTokenType = TokenType.NUMBER;
 
-        idx = endIdx + 1;
+        currPos = endIdx + 1;
     }
 
     private int findEndOfNumber(int startIdx) {
@@ -173,15 +194,15 @@ public final class ExpressionLexer {
             insertMultiplicationOp();
         }
 
-        int endIdx = findEndOfVariable(idx);
+        final int endIdx = findEndOfVariable(currPos);
 
-        String variableStr = expr.substring(idx, endIdx + 1);
+        final String variableStr = expr.substring(currPos, endIdx + 1);
 
         token = token.concat(variableStr);
 
         prevTokenType = TokenType.VARIABLE;
 
-        idx = endIdx + 1;
+        currPos = endIdx + 1;
     }
 
     private int findEndOfVariable(int startIdx) {
@@ -191,17 +212,15 @@ public final class ExpressionLexer {
 
     private int findEndOfExprComponent(int startIdx, @NotNull Predicate<Character> predicate) {
 
-        for (int idx_ = startIdx; idx_ < expr.length(); idx_++) {
+        for (int idx = startIdx; idx < expr.length(); idx++) {
 
-            char chr = expr.charAt(idx_);
+            final char chr = expr.charAt(idx);
 
             if (!predicate.test(chr)) {
-                return idx_ - 1;
+                return idx - 1;
             }
         }
 
         return expr.length() - 1;
     }
-
-
 }

@@ -6,7 +6,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-class ExpressionSimplifier {
+/**
+ * @author Moussa
+ */
+public final class ExpressionSimplifier {
+
+    private ExpressionSimplifier() {
+    }
 
     public static void main(String @NotNull ... args) throws InvalidExpressionException {
 
@@ -14,32 +20,36 @@ class ExpressionSimplifier {
             return;
         }
 
-        String[] variables = new String[args.length - 1];
+        final String[] variables = new String[args.length - 1];
 
-        if (args.length > 1) System.arraycopy(args, 1, variables, 0, args.length - 1);
+        if (args.length > 1) {
 
-        final Map<String, String> variableToValue = parseInputVariables(variables);
+            System.arraycopy(args, 1, variables, 0, args.length - 1);
+        }
 
-        var expr = args[0];
+        final var expr = args[0];
 
-        var cleanExpr = expr.replaceAll("\\s+", "");
+        final var cleanExpr = expr.replaceAll("\\s+", "");
 
         if (cleanExpr.isEmpty()) {
             return;
         }
 
-        var simplifiedExpr = simplifyExpr(cleanExpr, variableToValue);
+        final Map<String, String> variableToValue = parseInputVariables(variables);
 
+        final var simplifiedExpr = simplifyExpr(cleanExpr, variableToValue);
+
+        //NOPMD - suppressed SystemPrintln
         System.out.println(simplifiedExpr);
     }
 
     private static @NotNull Map<String, String> parseInputVariables(String @NotNull ... variables) {
 
-        Map<String, String> variableToValue = new HashMap<>();
+        final Map<String, String> variableToValue = new HashMap<>(variables.length);
 
-        for (String input : variables) {
+        for (final var input : variables) {
 
-            String[] split = input.split("=");
+            final var split = input.split("=");
 
             variableToValue.put(split[0], split[1]);
         }
@@ -49,62 +59,66 @@ class ExpressionSimplifier {
 
     public static String simplifyExpr(@NotNull String expr, @NotNull Map<String, String> variableToValue) throws InvalidExpressionException {
 
-        var syntaxTree = parse(expr);
+        final var syntaxTree = parse(expr);
 
-        var simplifiedTree = simplify(syntaxTree, variableToValue);
+        final var subbedTree = makeSubstitutions(syntaxTree, variableToValue);
+
+        final var simplifiedTree = simplify(subbedTree);
 
         return simplifiedTree.toString();
     }
 
-    private static SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
+    private static @NotNull SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
 
-        var lexer = new ExpressionLexer(expr);
+        final var lexer = new ExpressionLexer(expr);
 
         lexer.lexExpression();
 
-        var lexNodes = lexer.lexNodes;
+        final var lexNodes = lexer.getLexNodes();
 
-        var subTrees = makeSubTrees(lexNodes);
+        final var subTrees = makeSubTrees(lexNodes);
 
         return buildTree(subTrees);
     }
 
-    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
-
-        var subbedTree = makeSubstitutions(tree, variableToValue);
-
-        return simplify(subbedTree);
-    }
-
-    private static SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
+    @Contract("null, _ -> null; !null, _ -> !null")
+    private static @Nullable SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
 
         if (tree == null) {
+
             return null;
         }
 
         assert tree.left != null;
-        var subbedLeft = makeSubstitutions(tree.left, variableToValue);
+        final var subbedLeft = makeSubstitutions(tree.left, variableToValue);
 
         assert tree.right != null;
-        var subbedRight = makeSubstitutions(tree.right, variableToValue);
+        final var subbedRight = makeSubstitutions(tree.right, variableToValue);
 
-        String token = tree.getToken();
+        final String token = tree.getToken();
 
-        LexNode node;
+        final LexNode node;
 
         if (variableToValue.containsKey(token)) {
 
-            var newToken = variableToValue.get(token);
+            final var newToken = variableToValue.get(token);
 
             node = new LexNode(newToken, TokenType.NUMBER);
+
         } else {
+
             node = tree.node;
         }
 
         return new SyntaxTree(node, subbedLeft, subbedRight);
     }
 
-    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree) {
+    @Contract("null -> null; !null -> !null")
+    private static @Nullable SyntaxTree simplify(@Nullable SyntaxTree tree) {
+
+        if (tree == null) {
+            return null;
+        }
 
         return foldConstants(tree);
 
@@ -116,22 +130,23 @@ class ExpressionSimplifier {
     }
 
 
-    @NotNull
-    private static SyntaxTree foldConstants(@NotNull SyntaxTree tree) {
+    private static @NotNull SyntaxTree foldConstants(@NotNull SyntaxTree tree) {
 
         if (tree.isLeaf()) {
+
             return tree;
         }
 
-        assert tree.left != null;
-        SyntaxTree left = simplify(tree.left);
 
-        assert tree.right != null;
-        SyntaxTree right = simplify(tree.right);
+        final SyntaxTree left = simplify(tree.left);
+        assert left != null;
+
+        final SyntaxTree right = simplify(tree.right);
+        assert right != null;
 
         if (left.getType() == TokenType.NUMBER && right.getType() == TokenType.NUMBER) {
 
-            var newToken = evalTree(tree.getToken(), left.getToken(), right.getToken());
+            final var newToken = evalTree(tree.getToken(), left.getToken(), right.getToken());
 
             return new SyntaxTree(new LexNode(newToken, TokenType.NUMBER));
         }
@@ -141,11 +156,11 @@ class ExpressionSimplifier {
 
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
 
-        var left = Double.parseDouble(leftToken);
+        final var left = Double.parseDouble(leftToken);
 
-        var right = Double.parseDouble(rightToken);
+        final var right = Double.parseDouble(rightToken);
 
-        double res = Operator.getFunction(operator).applyAsDouble(left, right);
+        final double res = Operator.getFunction(operator).applyAsDouble(left, right);
 
         if (res == Math.floor(res)) {
 
@@ -158,17 +173,18 @@ class ExpressionSimplifier {
         }
     }
 
-    private static @NotNull ArrayList<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
+    private static @NotNull List<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
 
-        ArrayList<SyntaxTree> subTrees = new ArrayList<>();
+        final List<SyntaxTree> subTrees = new ArrayList<>();
 
-        for (var lexNode : lexNodes) {
+        for (final var lexNode : lexNodes) {
 
             if (lexNode.type == TokenType.SUBEXPR) {
 
-                var subExpr = lexNode.token;
+                final var subExpr = lexNode.token;
 
-                var subExprNoParens = subExpr.substring(1, subExpr.length() - 1); // Remove parentheses
+                // Remove parentheses
+                final var subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
 
                 subTrees.add(parse(subExprNoParens));
 
@@ -182,16 +198,17 @@ class ExpressionSimplifier {
         return subTrees;
     }
 
-    private static SyntaxTree buildTree(@NotNull ArrayList<SyntaxTree> subTrees) throws InvalidExpressionException {
+    private static SyntaxTree buildTree(@NotNull List<SyntaxTree> subTrees) throws InvalidExpressionException {
 
         if (subTrees.size() == 1) {
+
             return subTrees.get(0);
         }
 
-        var newSubTrees = new ArrayList<>(subTrees);
+        List<SyntaxTree> newSubTrees = new ArrayList<>(subTrees);
 
 
-        for (Set<String> operators : Operator.tokensGroupedByPrecedenceDecreasingOrder()) {
+        for (final var operators : Operator.tokensGroupedByPrecedence()) {
             // Building the complete tree from subtrees must respect operator precedence.
 
             newSubTrees = buildTree(newSubTrees, operators);
@@ -203,17 +220,17 @@ class ExpressionSimplifier {
     }
 
     @Contract("_, _ -> new")
-    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, @NotNull Set<String> operators) throws InvalidExpressionException {
+    private static @NotNull List<SyntaxTree> buildTree(@NotNull List<SyntaxTree> trees, @NotNull Set<String> operators) throws InvalidExpressionException {
 
-        Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
+        final Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
 
         SyntaxTree operatorTree = null;
 
-        for (SyntaxTree tree : trees) {
+        for (final SyntaxTree tree : trees) {
 
-            boolean isOperator = tree.getType() == TokenType.OPERATOR;
+            final boolean isOperator = tree.getType() == TokenType.OPERATOR;
 
-            boolean isCorrectOperator = operators.contains(tree.getToken());
+            final boolean isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
@@ -221,9 +238,9 @@ class ExpressionSimplifier {
 
             } else if (operatorTree != null) {
 
-                var leftTree = subTreesStack.removeLast();
+                final var leftTree = subTreesStack.removeLast();
 
-                SyntaxTree newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
+                final var newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
 
                 subTreesStack.addLast(newTree);
 
@@ -237,6 +254,7 @@ class ExpressionSimplifier {
         }
 
         if (operatorTree != null) {
+
             throw new InvalidExpressionException("Invalid expression");
         }
 

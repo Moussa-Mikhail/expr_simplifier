@@ -3,7 +3,7 @@ package expressionsimplifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class SyntaxTree {
+final class SyntaxTree {
     public final LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
