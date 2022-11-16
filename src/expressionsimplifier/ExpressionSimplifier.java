@@ -48,6 +48,7 @@ class ExpressionSimplifier {
     }
 
     public static String simplifyExpr(@NotNull String expr, @NotNull Map<String, String> variableToValue) throws InvalidExpressionException {
+
         var syntaxTree = parse(expr);
 
         var simplifiedTree = simplify(syntaxTree, variableToValue);
@@ -199,10 +200,6 @@ class ExpressionSimplifier {
 
     @Contract("_, _ -> new")
     private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, @NotNull Set<String> operators) throws InvalidExpressionException {
-        /*
-          This function is used to apply operator precedence to the trees.
-          It will replace the operator and its adjacent operands with a new tree.
-         */
 
         Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
 
