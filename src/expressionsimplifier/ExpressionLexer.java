@@ -11,6 +11,7 @@ public final class ExpressionLexer {
         throw new IllegalStateException("Utility class");
     }
 
+    @SuppressWarnings("java:S3776")
     static @NotNull ArrayList<LexNode> lexExpression(@NotNull String expr) throws InvalidExpressionException {
 
         var cleanExpr = expr.replaceAll("\\s+", "");
