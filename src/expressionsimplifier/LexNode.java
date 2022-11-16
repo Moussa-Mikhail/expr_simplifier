@@ -14,11 +14,4 @@ class LexNode {
         return token;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public TokenType getType() {
-        return type;
-    }
 }
