@@ -14,8 +14,6 @@ class ExpressionSimplifier {
             return;
         }
 
-        System.out.println(Arrays.toString(args));
-
         String[] variables = new String[args.length - 1];
 
         if (args.length > 1) System.arraycopy(args, 1, variables, 0, args.length - 1);
@@ -60,7 +58,11 @@ class ExpressionSimplifier {
 
     private static SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
 
-        var lexNodes = ExpressionLexer.lexExpression(expr);
+        var lexer = new ExpressionLexer(expr);
+
+        lexer.lexExpression();
+
+        var lexNodes = lexer.lexNodes;
 
         var subTrees = makeSubTrees(lexNodes);
 
