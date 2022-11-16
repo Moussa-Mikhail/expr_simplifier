@@ -4,11 +4,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class SyntaxTree {
-    public final LexNode node;
+    public final @NotNull LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
 
-    public SyntaxTree(LexNode node) {
+    public SyntaxTree(@NotNull LexNode node) {
         this.node = node;
         this.left = null;
         this.right = null;
@@ -24,11 +24,11 @@ final class SyntaxTree {
         return left == null && right == null;
     }
 
-    public TokenType getType() {
+    public @NotNull TokenType getType() {
         return node.type;
     }
 
-    public String getToken() {
+    public @NotNull String getToken() {
         return node.token;
     }
 

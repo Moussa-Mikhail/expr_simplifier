@@ -1,16 +1,18 @@
 package expressionsimplifier;
 
-final class LexNode {
-    public final String token;
-    public final TokenType type;
+import org.jetbrains.annotations.NotNull;
 
-    public LexNode(String token, TokenType type) {
+final class LexNode {
+    public final @NotNull String token;
+    public final @NotNull TokenType type;
+
+    public LexNode(@NotNull String token, @NotNull TokenType type) {
         this.token = token;
         this.type = type;
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return token;
     }
 

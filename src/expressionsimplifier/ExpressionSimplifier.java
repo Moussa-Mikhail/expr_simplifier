@@ -14,6 +14,7 @@ public final class ExpressionSimplifier {
     private ExpressionSimplifier() {
     }
 
+    @Contract(pure = true)
     public static void main(String @NotNull ... args) throws InvalidExpressionException {
 
         if (args.length == 0) {
@@ -43,6 +44,7 @@ public final class ExpressionSimplifier {
         System.out.println(simplifiedExpr);
     }
 
+    @Contract(pure = true)
     private static @NotNull Map<String, String> parseInputVariables(String @NotNull ... variables) {
 
         final Map<String, String> variableToValue = new HashMap<>(variables.length);
@@ -57,6 +59,7 @@ public final class ExpressionSimplifier {
         return variableToValue;
     }
 
+    @Contract(pure = true)
     public static String simplifyExpr(@NotNull String expr, @NotNull Map<String, String> variableToValue) throws InvalidExpressionException {
 
         final var syntaxTree = parse(expr);
@@ -68,6 +71,7 @@ public final class ExpressionSimplifier {
         return simplifiedTree.toString();
     }
 
+    @Contract(pure = true)
     private static @NotNull SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
 
         final var lexer = new ExpressionLexer(expr);
@@ -81,7 +85,7 @@ public final class ExpressionSimplifier {
         return buildTree(subTrees);
     }
 
-    @Contract("null, _ -> null; !null, _ -> !null")
+    @Contract(pure = true, value = "null, _ -> null; !null, _ -> new")
     private static @Nullable SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
 
         if (tree == null) {
@@ -113,7 +117,7 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, subbedLeft, subbedRight);
     }
 
-    @Contract("null -> null; !null -> !null")
+    @Contract(pure = true, value = "null -> null; !null -> new")
     private static @Nullable SyntaxTree simplify(@Nullable SyntaxTree tree) {
 
         if (tree == null) {
@@ -129,20 +133,18 @@ public final class ExpressionSimplifier {
         //and distributive property
     }
 
-
+    @Contract(pure = true)
     private static @NotNull SyntaxTree foldConstants(@NotNull SyntaxTree tree) {
 
         if (tree.isLeaf()) {
-
             return tree;
         }
 
-
+        assert tree.left != null;
         final SyntaxTree left = simplify(tree.left);
-        assert left != null;
 
+        assert tree.right != null;
         final SyntaxTree right = simplify(tree.right);
-        assert right != null;
 
         if (left.getType() == TokenType.NUMBER && right.getType() == TokenType.NUMBER) {
 
@@ -153,7 +155,7 @@ public final class ExpressionSimplifier {
 
         return new SyntaxTree(tree.node, left, right);
     }
-
+    @Contract(pure = true)
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
 
         final var left = Double.parseDouble(leftToken);
@@ -172,7 +174,7 @@ public final class ExpressionSimplifier {
 
         }
     }
-
+    @Contract(pure = true, value = "_ -> new")
     private static @NotNull List<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
 
         final List<SyntaxTree> subTrees = new ArrayList<>();
@@ -197,7 +199,7 @@ public final class ExpressionSimplifier {
 
         return subTrees;
     }
-
+    @Contract(pure = true)
     private static SyntaxTree buildTree(@NotNull List<SyntaxTree> subTrees) throws InvalidExpressionException {
 
         if (subTrees.size() == 1) {
@@ -219,7 +221,7 @@ public final class ExpressionSimplifier {
 
     }
 
-    @Contract("_, _ -> new")
+    @Contract(pure = true, value = "_, _ -> new")
     private static @NotNull List<SyntaxTree> buildTree(@NotNull List<SyntaxTree> trees, @NotNull Set<String> operators) throws InvalidExpressionException {
 
         final Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();

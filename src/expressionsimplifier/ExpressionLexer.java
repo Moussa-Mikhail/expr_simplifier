@@ -1,5 +1,6 @@
 package expressionsimplifier;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,6 +129,7 @@ public final class ExpressionLexer {
         lexNodes.add(new LexNode("*", prevTokenType));
     }
 
+    @Contract(pure = true)
     private int findClosingParen(int startIdx) {
 
         int parenCount = 0;
@@ -182,6 +184,7 @@ public final class ExpressionLexer {
         currPos = endIdx + 1;
     }
 
+    @Contract(pure = true)
     private int findEndOfNumber(int startIdx) {
 
         return findEndOfExprComponent(startIdx, chr -> Character.isDigit(chr) || chr == '.');
@@ -205,11 +208,13 @@ public final class ExpressionLexer {
         currPos = endIdx + 1;
     }
 
+    @Contract(pure = true)
     private int findEndOfVariable(int startIdx) {
 
         return findEndOfExprComponent(startIdx, chr -> Character.isAlphabetic(chr) || Character.isDigit(chr));
     }
 
+    @Contract(pure = true)
     private int findEndOfExprComponent(int startIdx, @NotNull Predicate<Character> predicate) {
 
         for (int idx = startIdx; idx < expr.length(); idx++) {
