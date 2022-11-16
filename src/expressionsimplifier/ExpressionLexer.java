@@ -23,7 +23,6 @@ public final class ExpressionLexer {
 
     }
 
-    @SuppressWarnings("java:S3776")
     void lexExpression() throws InvalidExpressionException {
 
         while (idx < expr.length()) {
