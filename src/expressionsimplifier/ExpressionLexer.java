@@ -137,7 +137,7 @@ public final class ExpressionLexer {
         return findEndOfExprComponent(expr, startIdx, chr -> Character.isAlphabetic(chr) || Character.isDigit(chr));
     }
 
-    private static int findEndOfExprComponent(@NotNull String expr, int startIdx, Predicate<Character> predicate) {
+    private static int findEndOfExprComponent(@NotNull String expr, int startIdx, @NotNull Predicate<Character> predicate) {
 
     	for (int idx = startIdx; idx < expr.length(); idx++) {
 
