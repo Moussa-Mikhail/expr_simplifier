@@ -24,6 +24,14 @@ class SyntaxTree {
         return left == null && right == null;
     }
 
+    public TokenType getType() {
+        return node.type;
+    }
+
+    public String getToken() {
+        return node.token;
+    }
+
     @Override
     public String toString() {
         if (isLeaf()) {

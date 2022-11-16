@@ -10,6 +10,12 @@ class ExpressionSimplifier {
 
     public static void main(String @NotNull ... args) throws InvalidExpressionException {
 
+        if (args.length == 0) {
+            return;
+        }
+
+        System.out.println(Arrays.toString(args));
+
         String[] variables = new String[args.length - 1];
 
         if (args.length > 1) System.arraycopy(args, 1, variables, 0, args.length - 1);
@@ -77,7 +83,7 @@ class ExpressionSimplifier {
         assert tree.right != null;
         var subbedRight = makeSubstitutions(tree.right, variableToValue);
 
-        String token = tree.node.token;
+        String token = tree.getToken();
 
         LexNode node;
 
@@ -118,9 +124,9 @@ class ExpressionSimplifier {
         assert tree.right != null;
         SyntaxTree right = simplify(tree.right);
 
-        if (left.node.type == TokenType.NUMBER && right.node.type == TokenType.NUMBER) {
+        if (left.getType() == TokenType.NUMBER && right.getType() == TokenType.NUMBER) {
 
-            var newToken = evalTree(tree.node.token, left.node.token, right.node.token);
+            var newToken = evalTree(tree.getToken(), left.getToken(), right.getToken());
 
             return new SyntaxTree(new LexNode(newToken, TokenType.NUMBER));
         }
@@ -153,9 +159,9 @@ class ExpressionSimplifier {
 
         for (var lexNode : lexNodes) {
 
-            if (lexNode.getType() == TokenType.SUBEXPR) {
+            if (lexNode.type == TokenType.SUBEXPR) {
 
-                var subExpr = lexNode.getToken();
+                var subExpr = lexNode.token;
 
                 var subExprNoParens = subExpr.substring(1, subExpr.length() - 1); // Remove parentheses
 
@@ -171,7 +177,7 @@ class ExpressionSimplifier {
         return subTrees;
     }
 
-    private static SyntaxTree buildTree(@NotNull ArrayList<SyntaxTree> subTrees) {
+    private static SyntaxTree buildTree(@NotNull ArrayList<SyntaxTree> subTrees) throws InvalidExpressionException {
 
         if (subTrees.size() == 1) {
             return subTrees.get(0);
@@ -192,7 +198,7 @@ class ExpressionSimplifier {
     }
 
     @Contract("_, _ -> new")
-    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, @NotNull Set<String> operators) {
+    private static @NotNull ArrayList<SyntaxTree> buildTree(@NotNull ArrayList<SyntaxTree> trees, @NotNull Set<String> operators) throws InvalidExpressionException {
         /*
           This function is used to apply operator precedence to the trees.
           It will replace the operator and its adjacent operands with a new tree.
@@ -204,9 +210,9 @@ class ExpressionSimplifier {
 
         for (SyntaxTree tree : trees) {
 
-            boolean isOperator = tree.node.type == TokenType.OPERATOR;
+            boolean isOperator = tree.getType() == TokenType.OPERATOR;
 
-            boolean isCorrectOperator = operators.contains(tree.node.token);
+            boolean isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
@@ -227,6 +233,10 @@ class ExpressionSimplifier {
                 subTreesStack.addLast(tree);
 
             }
+        }
+
+        if (operatorTree != null) {
+            throw new InvalidExpressionException("Invalid expression");
         }
 
         return new ArrayList<>(subTreesStack);
