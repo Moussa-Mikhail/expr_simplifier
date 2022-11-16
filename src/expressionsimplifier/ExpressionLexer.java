@@ -30,6 +30,13 @@ public final class ExpressionLexer {
 
             if (chr == '(') {
 
+                if (tokenType == TokenType.SUBEXPR) {
+
+                    tokenType = TokenType.OPERATOR;
+
+                    lexNodes.add(new LexNode("*", tokenType));
+                }
+
                 int endIdx = findClosingParen(cleanExpr, idx);
 
                 if (endIdx == -1) {
@@ -83,7 +90,6 @@ public final class ExpressionLexer {
                     tokenType = TokenType.OPERATOR;
 
                     lexNodes.add(new LexNode("*", tokenType));
-
                 }
 
                 int endIdx = findEndOfVariable(cleanExpr, idx);
