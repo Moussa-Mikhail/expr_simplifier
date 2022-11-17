@@ -82,6 +82,7 @@ public final class ExpressionLexer {
                     throw new InvalidExpressionException("Invalid character: " + chr);
                 }
 
+            assert prevTokenType != null;
             lexNodes.add(new LexNode(token, prevTokenType));
 
             token = "";
