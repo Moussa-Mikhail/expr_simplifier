@@ -36,7 +36,7 @@ public final class ExpressionLexer {
     }
 
     public @NotNull List<LexNode> getLexNodes() {
-        return lexNodes;
+        return new ArrayList<>(lexNodes);
     }
 
     public void lexExpression() throws InvalidExpressionException {
