@@ -46,7 +46,7 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull String... variableValues) throws InvalidExpressionException {
 
-        final var syntaxTree = parse(expr);
+        final var syntaxTree = parseExpr(expr);
 
         final Map<String, String> variableToValue = parseInputVariablesValues(List.of(variableValues));
 
@@ -58,7 +58,7 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true)
-    private static @NotNull SyntaxTree parse(@NotNull String expr) throws InvalidExpressionException {
+    private static @NotNull SyntaxTree parseExpr(@NotNull String expr) throws InvalidExpressionException {
 
         final var lexer = new ExpressionLexer(expr);
 
@@ -195,7 +195,7 @@ public final class ExpressionSimplifier {
                 // Remove parentheses
                 final var subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
 
-                subTrees.add(parse(subExprNoParens));
+                subTrees.add(parseExpr(subExprNoParens));
 
             } else {
 
