@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 
@@ -14,40 +15,37 @@ import java.util.function.Predicate;
  */
 public final class ExpressionLexer {
 
-    private static final char MINUS_SIGN = '-';
-
+    private static final String MULT_TOKEN = "*";
+    private static final char NEGATIVE_SIGN = '-';
     private static final char OPEN_PAREN = '(';
-
     private static final char CLOSE_PAREN = ')';
+    private static final @NotNull Set<String> OPERATOR_TOKENS = Operator.getOperatorTokens();
     private final @NotNull List<LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";
     private @Nullable TokenType prevTokenType;
-
-    /**
-     *
-     */
     private int currPos;
 
     public ExpressionLexer(@NotNull String expr) {
 
-        this.expr = expr;
-
+        this.expr = expr.replaceAll("\\s+", "");
     }
 
     public @NotNull List<LexNode> getLexNodes() {
+
         return new ArrayList<>(lexNodes);
     }
 
+    @SuppressWarnings("AlibabaAvoidComplexCondition")
     public void lexExpression() throws InvalidExpressionException {
 
         while (currPos < expr.length()) {
 
-            final char chr = expr.charAt(currPos);
+            final var chr = expr.charAt(currPos);
 
-            final boolean isAtBeginning = prevTokenType == null;
+            final var isAtBeginning = prevTokenType == null;
 
-            final boolean isPrevOperator = prevTokenType == TokenType.OPERATOR;
+            final var isPrevOperator = prevTokenType == TokenType.OPERATOR;
 
             if (chr == OPEN_PAREN) {
 
@@ -57,32 +55,34 @@ public final class ExpressionLexer {
 
                 throw new InvalidExpressionException("Unmatched closing parenthesis");
 
-            } else //noinspection AlibabaAvoidComplexCondition
-                if (chr == MINUS_SIGN && (isPrevOperator || isAtBeginning)) {
+            } else if (chr == NEGATIVE_SIGN && (isPrevOperator || isAtBeginning)) {
 
-                    token = String.valueOf(chr);
+                handleNegativeSign(chr);
 
-                    currPos++;
+            } else if (OPERATOR_TOKENS.contains(String.valueOf(chr))) {
 
-                    continue;
+                if (prevTokenType == TokenType.OPERATOR) {
 
-                } else if (Operator.getOperatorTokens().contains(String.valueOf(chr))) {
-
-                    lexOperator(chr);
-
-                } else if (Character.isDigit(chr)) {
-
-                    lexNumber();
-
-                } else if (Character.isAlphabetic(chr)) {
-
-                    lexVariable();
-
-                } else {
-                    throw new InvalidExpressionException("Invalid character: " + chr);
+                    throw new InvalidExpressionException("Two operators in a row");
                 }
 
+                lexOperator(chr);
+
+            } else if (Character.isDigit(chr)) {
+
+                lexNumber();
+
+            } else if (Character.isAlphabetic(chr)) {
+
+                lexVariable();
+
+            } else {
+
+                throw new InvalidExpressionException("Invalid character: " + chr);
+            }
+
             assert prevTokenType != null;
+
             lexNodes.add(new LexNode(token, prevTokenType));
 
             token = "";
@@ -93,15 +93,7 @@ public final class ExpressionLexer {
 
     private void lexSubExpr() throws InvalidExpressionException {
 
-        if (prevTokenType == TokenType.SUBEXPR || prevTokenType == TokenType.NUMBER) {
-
-            insertMultiplicationOp();
-
-        } else if (token.equals(String.valueOf(MINUS_SIGN))) {
-
-            lexNodes.add(new LexNode("-1", TokenType.NUMBER));
-
-            token = "";
+        if (implicitMultiplication()) {
 
             insertMultiplicationOp();
 
@@ -124,10 +116,16 @@ public final class ExpressionLexer {
         currPos = endIdx + 1;
     }
 
+    private boolean implicitMultiplication() {
+
+        return prevTokenType == TokenType.SUBEXPR || prevTokenType == TokenType.NUMBER;
+    }
+
     private void insertMultiplicationOp() {
+
         prevTokenType = TokenType.OPERATOR;
 
-        lexNodes.add(new LexNode("*", prevTokenType));
+        lexNodes.add(new LexNode(MULT_TOKEN, prevTokenType));
     }
 
     @Contract(pure = true)
@@ -156,6 +154,28 @@ public final class ExpressionLexer {
         return -1;
     }
 
+    private void handleNegativeSign(char chr) {
+
+        final var isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
+
+        currPos++;
+
+        if (isNextTokenNumber) {
+
+            token = String.valueOf(chr);
+
+            lexNumber();
+
+        } else {
+            // Implicit multiplication case
+
+            token = "-1";
+
+            prevTokenType = TokenType.NUMBER;
+
+        }
+    }
+
     private void lexOperator(char chr) {
 
         token = String.valueOf(chr);
@@ -167,17 +187,17 @@ public final class ExpressionLexer {
 
     private void lexNumber() {
 
-        final int endIdx = findEndOfNumber(currPos);
+        final var endIdx = findEndOfNumber(currPos);
 
-        final String numberStr = expr.substring(currPos, endIdx + 1);
+        final var numStr = expr.substring(currPos, endIdx + 1);
 
-        if (token.equals(String.valueOf(MINUS_SIGN))) {
+        if (token.equals(String.valueOf(NEGATIVE_SIGN))) {
 
-            token = MINUS_SIGN + numberStr;
+            token += numStr;
 
         } else {
 
-            token = numberStr;
+            token = numStr;
         }
 
         prevTokenType = TokenType.NUMBER;
@@ -200,9 +220,7 @@ public final class ExpressionLexer {
 
         final int endIdx = findEndOfVariable(currPos);
 
-        final String variableStr = expr.substring(currPos, endIdx + 1);
-
-        token = token.concat(variableStr);
+        token = expr.substring(currPos, endIdx + 1);
 
         prevTokenType = TokenType.VARIABLE;
 
