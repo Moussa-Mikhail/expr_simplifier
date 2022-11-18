@@ -21,12 +21,13 @@ public final class ExpressionSimplifier {
             return;
         }
 
-        final String[] variables = new String[args.length - 1];
+        final String[] variableValues = new String[args.length - 1];
 
         if (args.length > 1) {
 
-            System.arraycopy(args, 1, variables, 0, args.length - 1);
+            System.arraycopy(args, 1, variableValues, 0, args.length - 1);
         }
+
 
         final var expr = args[0];
 
@@ -36,33 +37,18 @@ public final class ExpressionSimplifier {
             return;
         }
 
-        final Map<String, String> variableToValue = parseInputVariables(variables);
-
-        final var simplifiedExpr = simplifyExpr(cleanExpr, variableToValue);
+        final var simplifiedExpr = simplifyExpr(cleanExpr, variableValues);
 
         //NOPMD - suppressed SystemPrintln
         System.out.println(simplifiedExpr);
     }
 
     @Contract(pure = true)
-    private static @NotNull Map<String, String> parseInputVariables(String @NotNull ... variables) {
-
-        final Map<String, String> variableToValue = new HashMap<>(variables.length);
-
-        for (final var input : variables) {
-
-            final var split = input.split("=");
-
-            variableToValue.put(split[0], split[1]);
-        }
-
-        return variableToValue;
-    }
-
-    @Contract(pure = true)
-    public static String simplifyExpr(@NotNull String expr, @NotNull Map<String, String> variableToValue) throws InvalidExpressionException {
+    public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull String... variableValues) throws InvalidExpressionException {
 
         final var syntaxTree = parse(expr);
+
+        final Map<String, String> variableToValue = parseInputVariablesValues(List.of(variableValues));
 
         final var subbedTree = makeSubstitutions(syntaxTree, variableToValue);
 
@@ -85,6 +71,27 @@ public final class ExpressionSimplifier {
         return buildTree(subTrees);
     }
 
+    @Contract(pure = true)
+    private static @NotNull Map<String, String> parseInputVariablesValues(@NotNull List<String> variableValues) {
+
+        if (variableValues.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, String> variableToValue = new HashMap<>(variableValues.size());
+
+        final var delimiter = "=";
+
+        for (final var input : variableValues) {
+
+            final var split = input.split(delimiter);
+
+            variableToValue.put(split[0], split[1]);
+        }
+
+        return variableToValue;
+    }
+
     @Contract(pure = true, value = "null, _ -> null; !null, _ -> new")
     private static @Nullable SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
 
@@ -93,10 +100,8 @@ public final class ExpressionSimplifier {
             return null;
         }
 
-        assert tree.left != null;
         final var subbedLeft = makeSubstitutions(tree.left, variableToValue);
 
-        assert tree.right != null;
         final var subbedRight = makeSubstitutions(tree.right, variableToValue);
 
         final String token = tree.getToken();
@@ -155,6 +160,7 @@ public final class ExpressionSimplifier {
 
         return new SyntaxTree(tree.node, left, right);
     }
+
     @Contract(pure = true)
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
 
@@ -174,6 +180,7 @@ public final class ExpressionSimplifier {
 
         }
     }
+
     @Contract(pure = true, value = "_ -> new")
     private static @NotNull List<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
 
@@ -199,6 +206,7 @@ public final class ExpressionSimplifier {
 
         return subTrees;
     }
+
     @Contract(pure = true)
     private static SyntaxTree buildTree(@NotNull List<SyntaxTree> subTrees) throws InvalidExpressionException {
 
@@ -228,11 +236,11 @@ public final class ExpressionSimplifier {
 
         SyntaxTree operatorTree = null;
 
-        for (final SyntaxTree tree : trees) {
+        for (final var tree : trees) {
 
-            final boolean isOperator = tree.getType() == TokenType.OPERATOR;
+            final var isOperator = tree.getType() == TokenType.OPERATOR;
 
-            final boolean isCorrectOperator = operators.contains(tree.getToken());
+            final var isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
