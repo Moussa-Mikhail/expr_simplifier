@@ -31,13 +31,11 @@ public final class ExpressionSimplifier {
 
         final var expr = args[0];
 
-        final var cleanExpr = expr.replaceAll("\\s+", "");
-
-        if (cleanExpr.isEmpty()) {
+        if (expr.isEmpty()) {
             return;
         }
 
-        final var simplifiedExpr = simplifyExpr(cleanExpr, variableValues);
+        final var simplifiedExpr = simplifyExpr(expr, variableValues);
 
         //NOPMD - suppressed SystemPrintln
         System.out.println(simplifiedExpr);
