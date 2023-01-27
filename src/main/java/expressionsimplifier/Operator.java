@@ -35,7 +35,7 @@ public enum Operator {
 
     public static DoubleBinaryOperator getFunction(String token) {
 
-        for (final var op : Operator.values()) {
+        for (final Operator op : Operator.values()) {
 
             if (op.isSameToken(token)) {
 
@@ -49,7 +49,7 @@ public enum Operator {
 
     public static int getPrecedence(String token) {
 
-        for (final var op : Operator.values()) {
+        for (final Operator op : Operator.values()) {
 
             if (op.isSameToken(token)) {
 
@@ -65,7 +65,7 @@ public enum Operator {
 
         final Set<String> tokens = new HashSet<>();
 
-        for (final var op : Operator.values()) {
+        for (final Operator op : Operator.values()) {
 
             tokens.add(op.token);
         }
@@ -77,11 +77,11 @@ public enum Operator {
 
         final LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
 
-        for (final var op : Operator.values()) {
+        for (final Operator op : Operator.values()) {
 
-            final var precedence = op.precedence;
+            final int precedence = op.precedence;
 
-            final var token = op.token;
+            final String token = op.token;
 
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
 

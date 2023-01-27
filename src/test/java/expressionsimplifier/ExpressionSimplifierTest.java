@@ -48,7 +48,7 @@ class ExpressionSimplifierTest {
     @MethodSource("arithmeticExpressions")
     void evaluateArithmeticTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
 
-        final var actual = ExpressionSimplifier.simplifyExpr(expr);
+        final String actual = ExpressionSimplifier.simplifyExpr(expr);
 
         assertEquals(expected, actual);
     }
@@ -57,7 +57,7 @@ class ExpressionSimplifierTest {
     @MethodSource("algebraExpressionsWithValues")
     void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
 
-        final var actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
+        final String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
 
         assertEquals(expected, actual);
     }
@@ -66,9 +66,9 @@ class ExpressionSimplifierTest {
     @MethodSource("expressions")
     void idempotentTest(@NotNull String expr) throws InvalidExpressionException {
 
-        final var simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
+        final String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
 
-        final var reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
+        final String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
 
         assertEquals(simplifiedExpr, reSimplifiedExpr);
     }

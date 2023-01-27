@@ -41,11 +41,11 @@ public final class ExpressionLexer {
 
         while (currPos < expr.length()) {
 
-            final var chr = expr.charAt(currPos);
+            final char chr = expr.charAt(currPos);
 
-            final var isAtBeginning = prevTokenType == null;
+            final boolean isAtBeginning = prevTokenType == null;
 
-            final var isPrevOperator = prevTokenType == TokenType.OPERATOR;
+            final boolean isPrevOperator = prevTokenType == TokenType.OPERATOR;
 
             if (chr == OPEN_PAREN) {
 
@@ -156,7 +156,7 @@ public final class ExpressionLexer {
 
     private void handleNegativeSign(char chr) {
 
-        final var isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
+        final boolean isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
 
         currPos++;
 
@@ -187,9 +187,9 @@ public final class ExpressionLexer {
 
     private void lexNumber() {
 
-        final var endIdx = findEndOfNumber(currPos);
+        final int endIdx = findEndOfNumber(currPos);
 
-        final var numStr = expr.substring(currPos, endIdx + 1);
+        final String numStr = expr.substring(currPos, endIdx + 1);
 
         if (token.equals(String.valueOf(NEGATIVE_SIGN))) {
 

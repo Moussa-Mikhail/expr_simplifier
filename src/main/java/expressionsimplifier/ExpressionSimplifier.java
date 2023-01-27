@@ -15,7 +15,7 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true)
-    public static void main(String @NotNull ... args) throws InvalidExpressionException {
+    public static void main(String @NotNull ... args) {
 
         if (args.length == 0) {
             return;
@@ -24,18 +24,23 @@ public final class ExpressionSimplifier {
         final String[] variableValues = new String[args.length - 1];
 
         if (args.length > 1) {
-
             System.arraycopy(args, 1, variableValues, 0, args.length - 1);
         }
 
 
-        final var expr = args[0];
+        final String expr = args[0];
 
         if (expr.isEmpty()) {
             return;
         }
 
-        final var simplifiedExpr = simplifyExpr(expr, variableValues);
+        final String simplifiedExpr;
+        try {
+            simplifiedExpr = simplifyExpr(expr, variableValues);
+        } catch (InvalidExpressionException e) {
+            System.out.println(e.getMessage());
+            return;
+        }
 
         //NOPMD - suppressed SystemPrintln
         System.out.println(simplifiedExpr);
@@ -44,13 +49,13 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull String... variableValues) throws InvalidExpressionException {
 
-        final var syntaxTree = parseExpr(expr);
+        final SyntaxTree syntaxTree = parseExpr(expr);
 
         final Map<String, String> variableToValue = parseInputVariablesValues(List.of(variableValues));
 
-        final var subbedTree = makeSubstitutions(syntaxTree, variableToValue);
+        final SyntaxTree subbedTree = makeSubstitutions(syntaxTree, variableToValue);
 
-        final var simplifiedTree = simplify(subbedTree);
+        final SyntaxTree simplifiedTree = simplify(subbedTree);
 
         return simplifiedTree.toString();
     }
@@ -58,13 +63,13 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     private static @NotNull SyntaxTree parseExpr(@NotNull String expr) throws InvalidExpressionException {
 
-        final var lexer = new ExpressionLexer(expr);
+        final ExpressionLexer lexer = new ExpressionLexer(expr);
 
         lexer.lexExpression();
 
-        final var lexNodes = lexer.getLexNodes();
+        final List<LexNode> lexNodes = lexer.getLexNodes();
 
-        final var subTrees = makeSubTrees(lexNodes);
+        final List<SyntaxTree> subTrees = makeSubTrees(lexNodes);
 
         return buildTree(subTrees);
     }
@@ -78,12 +83,10 @@ public final class ExpressionSimplifier {
 
         final Map<String, String> variableToValue = new HashMap<>(variableValues.size());
 
-        final var delimiter = "=";
+        final String delimiter = "=";
 
-        for (final var input : variableValues) {
-
-            final var split = input.split(delimiter);
-
+        for (final String input : variableValues) {
+            final String[] split = input.split(delimiter);
             variableToValue.put(split[0], split[1]);
         }
 
@@ -94,13 +97,11 @@ public final class ExpressionSimplifier {
     private static @Nullable SyntaxTree makeSubstitutions(@Nullable SyntaxTree tree, @NotNull Map<String, String> variableToValue) {
 
         if (tree == null) {
-
             return null;
         }
 
-        final var subbedLeft = makeSubstitutions(tree.left, variableToValue);
-
-        final var subbedRight = makeSubstitutions(tree.right, variableToValue);
+        final SyntaxTree subbedLeft = makeSubstitutions(tree.left, variableToValue);
+        final SyntaxTree subbedRight = makeSubstitutions(tree.right, variableToValue);
 
         final String token = tree.getToken();
 
@@ -108,7 +109,7 @@ public final class ExpressionSimplifier {
 
         if (variableToValue.containsKey(token)) {
 
-            final var newToken = variableToValue.get(token);
+            final String newToken = variableToValue.get(token);
 
             node = new LexNode(newToken, TokenType.NUMBER);
 
@@ -151,7 +152,7 @@ public final class ExpressionSimplifier {
 
         if (left.getType() == TokenType.NUMBER && right.getType() == TokenType.NUMBER) {
 
-            final var newToken = evalTree(tree.getToken(), left.getToken(), right.getToken());
+            final String newToken = evalTree(tree.getToken(), left.getToken(), right.getToken());
 
             return new SyntaxTree(new LexNode(newToken, TokenType.NUMBER));
         }
@@ -162,9 +163,9 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
 
-        final var left = Double.parseDouble(leftToken);
+        final double left = Double.parseDouble(leftToken);
 
-        final var right = Double.parseDouble(rightToken);
+        final double right = Double.parseDouble(rightToken);
 
         final double res = Operator.getFunction(operator).applyAsDouble(left, right);
 
@@ -184,14 +185,14 @@ public final class ExpressionSimplifier {
 
         final List<SyntaxTree> subTrees = new ArrayList<>();
 
-        for (final var lexNode : lexNodes) {
+        for (final LexNode lexNode : lexNodes) {
 
             if (lexNode.type == TokenType.SUBEXPR) {
 
-                final var subExpr = lexNode.token;
+                final String subExpr = lexNode.token;
 
                 // Remove parentheses
-                final var subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
+                final String subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
 
                 subTrees.add(parseExpr(subExprNoParens));
 
@@ -216,7 +217,7 @@ public final class ExpressionSimplifier {
         List<SyntaxTree> newSubTrees = new ArrayList<>(subTrees);
 
 
-        for (final var operators : Operator.tokensGroupedByPrecedence()) {
+        for (final Set<String> operators : Operator.tokensGroupedByPrecedence()) {
             // Building the complete tree from subtrees must respect operator precedence.
 
             newSubTrees = buildTree(newSubTrees, operators);
@@ -234,11 +235,11 @@ public final class ExpressionSimplifier {
 
         SyntaxTree operatorTree = null;
 
-        for (final var tree : trees) {
+        for (final SyntaxTree tree : trees) {
 
-            final var isOperator = tree.getType() == TokenType.OPERATOR;
+            final boolean isOperator = tree.getType() == TokenType.OPERATOR;
 
-            final var isCorrectOperator = operators.contains(tree.getToken());
+            final boolean isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
@@ -246,9 +247,9 @@ public final class ExpressionSimplifier {
 
             } else if (operatorTree != null) {
 
-                final var leftTree = subTreesStack.removeLast();
+                final SyntaxTree leftTree = subTreesStack.removeLast();
 
-                final var newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
+                final SyntaxTree newTree = new SyntaxTree(operatorTree.node, leftTree, tree);
 
                 subTreesStack.addLast(newTree);
 
