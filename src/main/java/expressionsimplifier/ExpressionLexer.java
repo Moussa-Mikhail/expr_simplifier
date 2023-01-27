@@ -93,9 +93,9 @@ public final class ExpressionLexer {
 
     private void lexSubExpr() throws InvalidExpressionException {
 
-        if (implicitMultiplication()) {
+        if (hasImplicitMultiplication()) {
 
-            insertMultiplicationOp();
+            appendMultiplicationOp();
 
         } else if (prevTokenType == TokenType.VARIABLE) {
 
@@ -116,12 +116,12 @@ public final class ExpressionLexer {
         currPos = endIdx + 1;
     }
 
-    private boolean implicitMultiplication() {
+    private boolean hasImplicitMultiplication() {
 
         return prevTokenType == TokenType.SUBEXPR || prevTokenType == TokenType.NUMBER;
     }
 
-    private void insertMultiplicationOp() {
+    private void appendMultiplicationOp() {
 
         prevTokenType = TokenType.OPERATOR;
 
@@ -215,7 +215,7 @@ public final class ExpressionLexer {
 
         if (prevTokenType == TokenType.NUMBER) {
 
-            insertMultiplicationOp();
+            appendMultiplicationOp();
         }
 
         final int endIdx = findEndOfVariable(currPos);
