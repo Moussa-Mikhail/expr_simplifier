@@ -4,13 +4,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
  * @author Moussa
  */
 public final class ExpressionSimplifier {
-
     private ExpressionSimplifier() {
     }
 
@@ -26,7 +26,6 @@ public final class ExpressionSimplifier {
         if (args.length > 1) {
             System.arraycopy(args, 1, variableValues, 0, args.length - 1);
         }
-
 
         final String expr = args[0];
 
@@ -112,7 +111,6 @@ public final class ExpressionSimplifier {
             final String newToken = variableToValue.get(token);
 
             node = new LexNode(newToken, TokenType.NUMBER);
-
         } else {
 
             node = tree.node;
@@ -162,44 +160,29 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true)
     private static @NotNull String evalTree(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
+        BigDecimal left = new BigDecimal(leftToken);
+        BigDecimal right = new BigDecimal(rightToken);
 
-        final double left = Double.parseDouble(leftToken);
+        final BigDecimal res = Operator.getFunction(operator).apply(left, right);
 
-        final double right = Double.parseDouble(rightToken);
-
-        final double res = Operator.getFunction(operator).applyAsDouble(left, right);
-
-        if (res == Math.floor(res)) {
-
-            return String.valueOf((int) res);
-
+        if (res.scale() <= 0) {
+            return String.valueOf(res.longValueExact());
         } else {
-
             return String.valueOf(res);
-
         }
     }
 
     @Contract(pure = true, value = "_ -> new")
     private static @NotNull List<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
-
         final List<SyntaxTree> subTrees = new ArrayList<>();
-
         for (final LexNode lexNode : lexNodes) {
-
             if (lexNode.type == TokenType.SUBEXPR) {
-
                 final String subExpr = lexNode.token;
-
                 // Remove parentheses
                 final String subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
-
                 subTrees.add(parseExpr(subExprNoParens));
-
             } else {
-
                 subTrees.add(new SyntaxTree(lexNode));
-
             }
         }
 
@@ -208,24 +191,17 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true)
     private static SyntaxTree buildTree(@NotNull List<SyntaxTree> subTrees) throws InvalidExpressionException {
-
         if (subTrees.size() == 1) {
-
             return subTrees.get(0);
         }
 
         List<SyntaxTree> newSubTrees = new ArrayList<>(subTrees);
-
-
         for (final Set<String> operators : Operator.tokensGroupedByPrecedence()) {
             // Building the complete tree from subtrees must respect operator precedence.
-
             newSubTrees = buildTree(newSubTrees, operators);
-
         }
 
         return newSubTrees.get(0);
-
     }
 
     @Contract(pure = true, value = "_, _ -> new")
@@ -244,7 +220,6 @@ public final class ExpressionSimplifier {
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
 
                 operatorTree = tree;
-
             } else if (operatorTree != null) {
 
                 final SyntaxTree leftTree = subTreesStack.removeLast();
@@ -254,11 +229,9 @@ public final class ExpressionSimplifier {
                 subTreesStack.addLast(newTree);
 
                 operatorTree = null;
-
             } else {
 
                 subTreesStack.addLast(tree);
-
             }
         }
 

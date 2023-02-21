@@ -2,36 +2,34 @@ package expressionsimplifier;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
-import java.util.function.DoubleBinaryOperator;
+import java.util.function.BinaryOperator;
 
 /**
  * @author Moussa
  */
-
 public enum Operator {
     // Operators must be ordered by decreasing precedence.
-    POW("^", 2, Math::pow),
-    MUL("*", 1, (a, b) -> a * b),
-    DIV("/", 1, (a, b) -> a / b),
-    ADD("+", 0, Double::sum),
-    SUB("-", 0, (a, b) -> a - b);
-
+    POW("^", 2, (BigDecimal a, BigDecimal b) -> BigDecimal.valueOf(Math.pow(a.doubleValue(), b.doubleValue()))),
+    MUL("*", 1, BigDecimal::multiply),
+    DIV("/", 1, BigDecimal::divide),
+    ADD("+", 0, BigDecimal::add),
+    SUB("-", 0, BigDecimal::subtract);
     public final String token;
     public final int precedence;
-    public final DoubleBinaryOperator function;
+    public final BinaryOperator<BigDecimal> function;
 
-    Operator(String token, int precedence, DoubleBinaryOperator function) {
+    Operator(String token, int precedence, BinaryOperator<BigDecimal> function) {
         this.token = token;
         this.precedence = precedence;
         this.function = function;
     }
 
-
-    public static DoubleBinaryOperator getFunction(String token) {
+    public static BinaryOperator<BigDecimal> getFunction(String token) {
         for (final Operator op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.function;
