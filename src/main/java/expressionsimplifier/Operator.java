@@ -20,11 +20,9 @@ public enum Operator {
     ADD("+", 0, Double::sum),
     SUB("-", 0, (a, b) -> a - b);
 
-    private final String token;
-
-    private final int precedence;
-
-    private final DoubleBinaryOperator function;
+    public final String token;
+    public final int precedence;
+    public final DoubleBinaryOperator function;
 
     Operator(String token, int precedence, DoubleBinaryOperator function) {
         this.token = token;
@@ -34,13 +32,9 @@ public enum Operator {
 
 
     public static DoubleBinaryOperator getFunction(String token) {
-
         for (final Operator op : Operator.values()) {
-
-            if (op.isSameToken(token)) {
-
+            if (op.token.equals(token)) {
                 return op.function;
-
             }
         }
 
@@ -48,13 +42,9 @@ public enum Operator {
     }
 
     public static int getPrecedence(String token) {
-
         for (final Operator op : Operator.values()) {
-
-            if (op.isSameToken(token)) {
-
+            if (op.token.equals(token)) {
                 return op.precedence;
-
             }
         }
 
@@ -62,11 +52,8 @@ public enum Operator {
     }
 
     public static @NotNull Set<String> getOperatorTokens() {
-
         final Set<String> tokens = new HashSet<>();
-
         for (final Operator op : Operator.values()) {
-
             tokens.add(op.token);
         }
 
@@ -74,24 +61,15 @@ public enum Operator {
     }
 
     public static @NotNull Collection<Set<String>> tokensGroupedByPrecedence() {
-
         final LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
-
         for (final Operator op : Operator.values()) {
 
             final int precedence = op.precedence;
-
-            final String token = op.token;
-
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
-
+            final String token = op.token;
             precedenceToTokens.get(precedence).add(token);
         }
 
         return precedenceToTokens.values();
-    }
-
-    public boolean isSameToken(String token) {
-        return this.token.equals(token);
     }
 }
