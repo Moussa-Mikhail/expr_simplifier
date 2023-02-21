@@ -11,11 +11,12 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ExpressionSimplifierTest {
-
     public static @NotNull Stream<Arguments> arithmeticExpressions() {
         return Stream.of(
                 Arguments.of("1", "1"),
                 Arguments.of("1+1", "2"),
+                Arguments.of("0.1+0.1+0.1", "0.3"),
+                Arguments.of("0.1+(-0.1)", "0"),
                 Arguments.of("1+(-1)", "0"),
                 Arguments.of("-1*(-1)", "1"),
                 Arguments.of("-1*-1", "1"),
@@ -44,9 +45,63 @@ class ExpressionSimplifierTest {
         );
     }
 
+    public static @NotNull Stream<Arguments> expressionsWithCorrectParens() {
+        return Stream.of(
+                Arguments.of("1", "1"),
+                Arguments.of("1+1", "2"),
+                Arguments.of("-1", "-1"),
+                Arguments.of("x", "x"),
+                Arguments.of("x+y", "x + y"),
+                Arguments.of("x+1", "x + 1"),
+                Arguments.of("(-1+2)+x", "1 + x"),
+                Arguments.of("-x", "-x"),
+                Arguments.of("x-y", "x - y"),
+                Arguments.of("x+y+1", "x + y + 1"),
+                Arguments.of("(x+y)*(x-y)", "(x + y)(x - y)"),
+                Arguments.of("(x+y)(x-y)", "(x + y)(x - y)"),
+                Arguments.of("2*x", "2x"),
+                Arguments.of("2x", "2x"),
+                Arguments.of("2*(x+y)", "2(x + y)"),
+                Arguments.of("2(x+y)", "2(x + y)"),
+                Arguments.of("x*y*z", "x*y*z")
+        );
+    }
+
+    public static @NotNull Stream<Arguments> expressionsToBeStandardized() {
+        return Stream.of(
+                Arguments.of("1", "1"),
+                Arguments.of("1+x", "x + 1"),
+                Arguments.of("x+1", "x + 1"),
+                Arguments.of("x+x^2", "x^2 + x"),
+                Arguments.of("x^2+x", "x^2 + x"),
+                Arguments.of("x^2+x^3", "x^3 + x^2"),
+                Arguments.of("x*2", "2*x"),
+                Arguments.of("2*x", "2*x"),
+                Arguments.of("x*2*y", "2*x*y")
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("arithmeticExpressions")
-    void evaluateArithmeticTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+    void simplifyArithmeticExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+
+        final String actual = ExpressionSimplifier.simplifyExpr(expr);
+
+        assertEquals(expected, actual);
+    }
+
+    @ParameterizedTest
+    @MethodSource("expressionsWithCorrectParens")
+    void simplifyExpressionsWithCorrectParensTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+
+        final String actual = ExpressionSimplifier.simplifyExpr(expr);
+
+        assertEquals(expected, actual);
+    }
+
+    @ParameterizedTest
+    @MethodSource("expressionsToBeStandardized")
+    void standardizeExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
 
         final String actual = ExpressionSimplifier.simplifyExpr(expr);
 
