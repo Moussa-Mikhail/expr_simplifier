@@ -3,6 +3,7 @@ package expressionsimplifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -14,7 +15,7 @@ import java.util.function.BinaryOperator;
  */
 public enum Operator {
     // Operators must be ordered by decreasing precedence.
-    POW("^", 2, (BigDecimal a, BigDecimal b) -> BigDecimal.valueOf(Math.pow(a.doubleValue(), b.doubleValue()))),
+    POW("^", 2, Operator::pow),
     MUL("*", 1, BigDecimal::multiply),
     DIV("/", 1, BigDecimal::divide),
     ADD("+", 0, BigDecimal::add),
@@ -27,6 +28,18 @@ public enum Operator {
         this.token = token;
         this.precedence = precedence;
         this.function = function;
+    }
+
+    private static BigDecimal pow(BigDecimal a, BigDecimal b) {
+        try {
+            BigInteger bigIntegerA = a.toBigIntegerExact();
+            BigInteger bigIntegerB = b.toBigIntegerExact();
+            double pow = Math.pow(bigIntegerA.doubleValue(), bigIntegerB.doubleValue());
+            return BigDecimal.valueOf((long) pow);
+        } catch (ArithmeticException e) {
+            double pow = Math.pow(a.doubleValue(), b.doubleValue());
+            return BigDecimal.valueOf(pow);
+        }
     }
 
     public static BinaryOperator<BigDecimal> getFunction(String token) {

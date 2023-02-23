@@ -165,11 +165,7 @@ public final class ExpressionSimplifier {
 
         final BigDecimal res = Operator.getFunction(operator).apply(left, right);
 
-        if (res.scale() <= 0) {
-            return String.valueOf(res.longValueExact());
-        } else {
-            return String.valueOf(res);
-        }
+        return res.toPlainString();
     }
 
     @Contract(pure = true, value = "_ -> new")
