@@ -3,7 +3,15 @@ package expressionsimplifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 final class SyntaxTree {
+    public static final String MUL = "*";
+    public static final String NEGATIVE_ONE = "-1";
+    public static final String ADD = "+";
+    public static final String SUB = "-";
+    public static final char LEFT_PAREN = '(';
+    public static final char RIGHT_PAREN = ')';
     public final @NotNull LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
@@ -15,6 +23,16 @@ final class SyntaxTree {
     }
 
     public SyntaxTree(@NotNull LexNode node, @Nullable SyntaxTree left, @Nullable SyntaxTree right) {
+        boolean bothNonNull = left != null && right != null;
+        if (node.type == TokenType.OPERATOR && !bothNonNull) {
+            throw new IllegalArgumentException("Operator nodes must have non-null children");
+        }
+
+        boolean bothNull = left == null && right == null;
+        if (node.type != TokenType.OPERATOR && !bothNull) {
+            throw new IllegalArgumentException("Non-operator nodes must have null children");
+        }
+
         this.node = node;
         this.left = left;
         this.right = right;
@@ -33,11 +51,120 @@ final class SyntaxTree {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SyntaxTree that = (SyntaxTree) o;
+
+        if (!node.equals(that.node)) {
+            return false;
+        }
+
+        if (!Objects.equals(left, that.left)) {
+            return false;
+        }
+
+        return Objects.equals(right, that.right);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(node, left, right);
+    }
+
+    @Override
     public String toString() {
         if (isLeaf()) {
             return node.toString();
-        } else {
-            return String.format("(%s %s %s)", left, node, right);
         }
+
+        assert left != null;
+        assert right != null;
+
+        // Implicit multiplication
+        if (node.token.equals(MUL)) {
+            String expr = handleImplicitMultiplication();
+            if (!expr.isEmpty()) {
+                return expr;
+            }
+        }
+
+        String leftString = formatParens(left);
+        String rightString = formatParens(right);
+
+        if (node.token.equals(ADD) || node.token.equals(SUB)) {
+            return String.format("%s %s %s", leftString, node, rightString);
+        }
+
+        return String.format("%s%s%s", leftString, node, rightString);
+    }
+
+    private String handleImplicitMultiplication() {
+        assert left != null;
+        assert right != null;
+
+        boolean isRightVariable = right.getType() == TokenType.VARIABLE;
+        if (left.getToken().equals(NEGATIVE_ONE) && isRightVariable) {
+            return String.format("-%s", right);
+        }
+
+        boolean isLeftNumber = left.getType() == TokenType.NUMBER;
+        if (isLeftNumber && isRightVariable) {
+            return String.format("%s%s", left, right);
+        }
+
+        boolean isLeftLeaf = left.isLeaf();
+        boolean isRightLeaf = right.isLeaf();
+        if (isLeftNumber && !isRightLeaf) {
+            return String.format("%s(%s)", left, right);
+        }
+
+        if (!(isLeftLeaf || isRightLeaf)) {
+            return String.format("(%s)(%s)", left, right);
+        }
+
+        return "";
+    }
+
+    private String formatParens(SyntaxTree child) {
+        // Expressions are parenthesized by default
+        String childString = child.toString();
+        childString = String.format("(%s)", childString);
+
+        if (child.getPrecedence() >= this.getPrecedence()) {
+            childString = removeParens(childString);
+        }
+
+        if (child.isLeaf()) {
+            childString = removeParens(childString);
+
+            if (childString.startsWith(SUB)) {
+                childString = String.format("(%s)", childString);
+            }
+        }
+
+        return childString;
+    }
+
+    private int getPrecedence() {
+        if (isLeaf()) {
+            return -1;
+        }
+
+        return Operator.getPrecedence(getToken());
+    }
+
+    private static String removeParens(String expr) {
+        if (expr.charAt(0) == LEFT_PAREN && expr.charAt(expr.length() - 1) == RIGHT_PAREN) {
+            return expr.substring(1, expr.length() - 1);
+        }
+
+        return expr;
     }
 }

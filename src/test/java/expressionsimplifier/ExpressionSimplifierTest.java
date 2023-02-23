@@ -16,11 +16,13 @@ class ExpressionSimplifierTest {
                 Arguments.of("1", "1"),
                 Arguments.of("1+1", "2"),
                 Arguments.of("0.1+0.1+0.1", "0.3"),
-                Arguments.of("0.1+(-0.1)", "0"),
+                Arguments.of("0.1+(-0.1)", "0.0"),
                 Arguments.of("1+(-1)", "0"),
                 Arguments.of("-1*(-1)", "1"),
                 Arguments.of("-1*-1", "1"),
-                Arguments.of("1+2*3-(-3)*(-1)+(-1)(-1^5-2^3)", "13")
+                Arguments.of("1+2*3-(-3)*(-1)+(-1)(-1^5-2^3)", "13"),
+                Arguments.of("(-1)^3", "-1"),
+                Arguments.of("3*0.1+(-0.1)", "0.2")
         );
     }
 
@@ -45,7 +47,7 @@ class ExpressionSimplifierTest {
         );
     }
 
-    public static @NotNull Stream<Arguments> expressionsWithCorrectParens() {
+    public static @NotNull Stream<Arguments> expressionsToBeParenthesized() {
         return Stream.of(
                 Arguments.of("1", "1"),
                 Arguments.of("1+1", "2"),
@@ -63,7 +65,9 @@ class ExpressionSimplifierTest {
                 Arguments.of("2x", "2x"),
                 Arguments.of("2*(x+y)", "2(x + y)"),
                 Arguments.of("2(x+y)", "2(x + y)"),
-                Arguments.of("x*y*z", "x*y*z")
+                Arguments.of("x*y*z", "x*y*z"),
+                Arguments.of("2*-x", "-2x"),
+                Arguments.of("1+(2*x)", "1 + 2x")
         );
     }
 
@@ -85,16 +89,16 @@ class ExpressionSimplifierTest {
     @MethodSource("arithmeticExpressions")
     void simplifyArithmeticExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
 
-        final String actual = ExpressionSimplifier.simplifyExpr(expr);
+        String actual = ExpressionSimplifier.simplifyExpr(expr);
 
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
-    @MethodSource("expressionsWithCorrectParens")
+    @MethodSource("expressionsToBeParenthesized")
     void simplifyExpressionsWithCorrectParensTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
 
-        final String actual = ExpressionSimplifier.simplifyExpr(expr);
+        String actual = ExpressionSimplifier.simplifyExpr(expr);
 
         assertEquals(expected, actual);
     }
@@ -103,7 +107,7 @@ class ExpressionSimplifierTest {
     @MethodSource("expressionsToBeStandardized")
     void standardizeExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
 
-        final String actual = ExpressionSimplifier.simplifyExpr(expr);
+        String actual = ExpressionSimplifier.simplifyExpr(expr);
 
         assertEquals(expected, actual);
     }
@@ -112,7 +116,7 @@ class ExpressionSimplifierTest {
     @MethodSource("algebraExpressionsWithValues")
     void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
 
-        final String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
+        String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
 
         assertEquals(expected, actual);
     }
@@ -121,9 +125,9 @@ class ExpressionSimplifierTest {
     @MethodSource("expressions")
     void idempotentTest(@NotNull String expr) throws InvalidExpressionException {
 
-        final String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
+        String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
 
-        final String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
+        String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
 
         assertEquals(simplifiedExpr, reSimplifiedExpr);
     }
