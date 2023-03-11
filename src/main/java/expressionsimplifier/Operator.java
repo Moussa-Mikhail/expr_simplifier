@@ -30,7 +30,7 @@ public enum Operator {
         this.function = function;
     }
 
-    private static BigDecimal pow(BigDecimal a, BigDecimal b) {
+    private static @NotNull BigDecimal pow(@NotNull BigDecimal a, @NotNull BigDecimal b) {
         try {
             BigInteger bigIntegerA = a.toBigIntegerExact();
             BigInteger bigIntegerB = b.toBigIntegerExact();

@@ -51,7 +51,7 @@ final class SyntaxTree {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) {
             return true;
         }
@@ -105,7 +105,7 @@ final class SyntaxTree {
         return String.format("%s%s%s", leftString, node, rightString);
     }
 
-    private String handleImplicitMultiplication() {
+    private @NotNull String handleImplicitMultiplication() {
         assert left != null;
         assert right != null;
 
@@ -132,7 +132,7 @@ final class SyntaxTree {
         return "";
     }
 
-    private String formatParens(SyntaxTree child) {
+    private @NotNull String formatParens(@NotNull SyntaxTree child) {
         // Expressions are parenthesized by default
         String childString = child.toString();
         childString = String.format("(%s)", childString);
@@ -160,7 +160,7 @@ final class SyntaxTree {
         return Operator.getPrecedence(getToken());
     }
 
-    private static String removeParens(String expr) {
+    private static @NotNull String removeParens(@NotNull String expr) {
         if (expr.charAt(0) == LEFT_PAREN && expr.charAt(expr.length() - 1) == RIGHT_PAREN) {
             return expr.substring(1, expr.length() - 1);
         }
