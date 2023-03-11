@@ -75,9 +75,9 @@ public enum Operator {
         LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
         for (Operator op : Operator.values()) {
 
-            final int precedence = op.precedence;
+            int precedence = op.precedence;
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
-            final String token = op.token;
+            String token = op.token;
             precedenceToTokens.get(precedence).add(token);
         }
 
