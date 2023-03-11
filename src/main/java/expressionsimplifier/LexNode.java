@@ -15,5 +15,4 @@ final class LexNode {
     public @NotNull String toString() {
         return token;
     }
-
 }

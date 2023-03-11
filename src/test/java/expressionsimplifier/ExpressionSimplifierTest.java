@@ -88,47 +88,36 @@ class ExpressionSimplifierTest {
     @ParameterizedTest
     @MethodSource("arithmeticExpressions")
     void simplifyArithmeticExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-
         String actual = ExpressionSimplifier.simplifyExpr(expr);
-
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressionsToBeParenthesized")
     void simplifyExpressionsWithCorrectParensTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-
         String actual = ExpressionSimplifier.simplifyExpr(expr);
-
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressionsToBeStandardized")
     void standardizeExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-
         String actual = ExpressionSimplifier.simplifyExpr(expr);
-
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("algebraExpressionsWithValues")
     void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
-
         String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
-
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressions")
     void idempotentTest(@NotNull String expr) throws InvalidExpressionException {
-
         String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
-
         String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
-
         assertEquals(simplifiedExpr, reSimplifiedExpr);
     }
 }

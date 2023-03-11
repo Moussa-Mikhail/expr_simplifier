@@ -43,7 +43,7 @@ public enum Operator {
     }
 
     public static BinaryOperator<BigDecimal> getFunction(String token) {
-        for (final Operator op : Operator.values()) {
+        for (Operator op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.function;
             }
@@ -53,7 +53,7 @@ public enum Operator {
     }
 
     public static int getPrecedence(String token) {
-        for (final Operator op : Operator.values()) {
+        for (Operator op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.precedence;
             }
@@ -63,8 +63,8 @@ public enum Operator {
     }
 
     public static @NotNull Set<String> getOperatorTokens() {
-        final Set<String> tokens = new HashSet<>();
-        for (final Operator op : Operator.values()) {
+        Set<String> tokens = new HashSet<>();
+        for (Operator op : Operator.values()) {
             tokens.add(op.token);
         }
 
@@ -72,8 +72,8 @@ public enum Operator {
     }
 
     public static @NotNull Collection<Set<String>> tokensGroupedByPrecedence() {
-        final LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
-        for (final Operator op : Operator.values()) {
+        LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
+        for (Operator op : Operator.values()) {
 
             final int precedence = op.precedence;
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());

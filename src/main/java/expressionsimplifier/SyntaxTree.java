@@ -10,8 +10,8 @@ final class SyntaxTree {
     public static final String NEGATIVE_ONE = "-1";
     public static final String ADD = "+";
     public static final String SUB = "-";
-    public static final char LEFT_PAREN = '(';
-    public static final char RIGHT_PAREN = ')';
+    public static final String LEFT_PAREN = "(";
+    public static final String RIGHT_PAREN = ")";
     public final @NotNull LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
@@ -36,6 +36,16 @@ final class SyntaxTree {
         this.node = node;
         this.left = left;
         this.right = right;
+    }
+
+    private static @NotNull String removeParens(@NotNull String expr) {
+        String firstChar = String.valueOf(expr.charAt(0));
+        String lastChar = String.valueOf(expr.charAt(expr.length() - 1));
+        if (firstChar.equals(LEFT_PAREN) && lastChar.equals(RIGHT_PAREN)) {
+            return expr.substring(1, expr.length() - 1);
+        }
+
+        return expr;
     }
 
     public boolean isLeaf() {
@@ -158,13 +168,5 @@ final class SyntaxTree {
         }
 
         return Operator.getPrecedence(getToken());
-    }
-
-    private static @NotNull String removeParens(@NotNull String expr) {
-        if (expr.charAt(0) == LEFT_PAREN && expr.charAt(expr.length() - 1) == RIGHT_PAREN) {
-            return expr.substring(1, expr.length() - 1);
-        }
-
-        return expr;
     }
 }
