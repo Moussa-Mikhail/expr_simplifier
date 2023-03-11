@@ -6,18 +6,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Predicate;
+
+import static expressionsimplifier.Constants.*;
 
 /**
  * @author Moussa
  */
 public final class ExpressionLexer {
-    private static final String MULT_TOKEN = "*";
-    private static final String NEGATIVE_SIGN = "-";
-    private static final String OPEN_PAREN = "(";
-    private static final String CLOSE_PAREN = ")";
-    private static final @NotNull Set<String> OPERATOR_TOKENS = Operator.getOperatorTokens();
     private final @NotNull List<LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";
@@ -43,9 +39,9 @@ public final class ExpressionLexer {
             boolean isAtBeginning = prevTokenType == null;
             boolean isPrevOperator = prevTokenType == TokenType.OPERATOR;
 
-            if (chr.equals(OPEN_PAREN)) {
+            if (chr.equals(LEFT_PAREN)) {
                 lexSubExpr();
-            } else if (chr.equals(CLOSE_PAREN)) {
+            } else if (chr.equals(RIGHT_PAREN)) {
                 throw new InvalidExpressionException("Unmatched closing parenthesis");
             } else if (chr.equals(NEGATIVE_SIGN) && (isPrevOperator || isAtBeginning)) {
                 handleNegativeSign(chr);
@@ -92,7 +88,7 @@ public final class ExpressionLexer {
 
     private void appendMultiplicationOp() {
         prevTokenType = TokenType.OPERATOR;
-        lexNodes.add(new LexNode(MULT_TOKEN, prevTokenType));
+        lexNodes.add(new LexNode(MUL, prevTokenType));
     }
 
     @Contract(pure = true)
@@ -100,9 +96,9 @@ public final class ExpressionLexer {
         int parenCount = 0;
         for (int idx = startIdx; idx < expr.length(); idx++) {
             String chr = charAt(idx);
-            if (OPEN_PAREN.equals(chr)) {
+            if (LEFT_PAREN.equals(chr)) {
                 parenCount++;
-            } else if (CLOSE_PAREN.equals(chr)) {
+            } else if (RIGHT_PAREN.equals(chr)) {
                 parenCount--;
             }
 
@@ -114,7 +110,7 @@ public final class ExpressionLexer {
         return -1;
     }
 
-    private void handleNegativeSign(String chr) {
+    private void handleNegativeSign(@NotNull String chr) {
         boolean isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
         currPos++;
         if (isNextTokenNumber) {
@@ -127,7 +123,7 @@ public final class ExpressionLexer {
         }
     }
 
-    private void lexOperator(String chr) {
+    private void lexOperator(@NotNull String chr) {
         token = chr;
         prevTokenType = TokenType.OPERATOR;
         currPos++;
@@ -136,7 +132,7 @@ public final class ExpressionLexer {
     private void lexNumber() {
         int endIdx = findEndOfNumber(currPos);
         String numStr = expr.substring(currPos, endIdx + 1);
-        if (NEGATIVE_SIGN.equals(token)) {
+        if (token.equals(NEGATIVE_SIGN)) {
             token += numStr;
         } else {
             token = numStr;

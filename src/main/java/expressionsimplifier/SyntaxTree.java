@@ -5,13 +5,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+import static expressionsimplifier.Constants.*;
+
 final class SyntaxTree {
-    public static final String MUL = "*";
-    public static final String NEGATIVE_ONE = "-1";
-    public static final String ADD = "+";
-    public static final String SUB = "-";
-    public static final String LEFT_PAREN = "(";
-    public static final String RIGHT_PAREN = ")";
     public final @NotNull LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
