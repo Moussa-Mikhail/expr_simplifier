@@ -7,6 +7,8 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static expressionsimplifier.Constants.*;
+
 /**
  * @author Moussa
  */
@@ -43,14 +45,19 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true)
-    public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull String... variableValues) throws InvalidExpressionException {
+    public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull List<String> variableValues) throws InvalidExpressionException {
         SyntaxTree syntaxTree = parseExpr(expr);
-        Map<String, String> variableToValue = parseInputVariablesValues(List.of(variableValues));
+        Map<String, String> variableToValue = parseInputVariablesValues(variableValues);
 
         SyntaxTree subbedTree = makeSubstitutions(syntaxTree, variableToValue);
         SyntaxTree simplifiedTree = simplify(subbedTree);
 
         return simplifiedTree.toString();
+    }
+
+    @Contract(pure = true)
+    public static @NotNull String simplifyExpr(@NotNull String expr, String @NotNull ... variableValues) throws InvalidExpressionException {
+        return simplifyExpr(expr, Arrays.asList(variableValues));
     }
 
     @Contract(pure = true)
@@ -99,59 +106,99 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, subbedLeft, subbedRight);
     }
 
-    @Contract(pure = true, value = "null -> null; !null -> new")
-    private static @Nullable SyntaxTree simplify(@Nullable SyntaxTree tree) {
-        if (tree == null) {
-            return null;
+    @Contract(pure = true, value = "_ -> new")
+    private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree) {
+        SyntaxTree simplifiedTree = tree;
+        List<Simplifier> simplifiers = List.of(ExpressionSimplifier::foldConstants, ExpressionSimplifier::standardize);
+        for (var simplifier : simplifiers) {
+            if (simplifiedTree.isLeaf()) {
+                return simplifiedTree;
+            }
+            assert simplifiedTree.left != null;
+            assert simplifiedTree.right != null;
+            LexNode node = simplifiedTree.node;
+            SyntaxTree left = simplify(simplifiedTree.left);
+            SyntaxTree right = simplify(simplifiedTree.right);
+            simplifiedTree = simplifier.simplify(node.token, left, right);
         }
 
-        return foldConstants(tree);
+        return simplifiedTree;
 
         //TODO: implement other simplifications
-        //like double negatives
+        //double negatives
         //and 0*x = 0
         //and 1*x = x
         //and distributive property
     }
 
     @Contract(pure = true)
-    private static @NotNull SyntaxTree foldConstants(@NotNull SyntaxTree tree) {
-        if (tree.isLeaf()) {
-            return tree;
-        }
+    private static @NotNull SyntaxTree foldConstants(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
+        if (left.getTokenType() == TokenType.NUMBER && right.getTokenType() == TokenType.NUMBER) {
+            BigDecimal leftNum = new BigDecimal(left.getToken());
+            BigDecimal rightNum = new BigDecimal(right.getToken());
 
-        assert tree.left != null;
-        SyntaxTree left = simplify(tree.left);
-
-        assert tree.right != null;
-        SyntaxTree right = simplify(tree.right);
-
-        if (left.getType() == TokenType.NUMBER && right.getType() == TokenType.NUMBER) {
-            String newToken = evalArithmetic(tree.getToken(), left.getToken(), right.getToken());
+            BigDecimal result = Operator.getFunction(operator).apply(leftNum, rightNum);
+            String newToken = result.toPlainString();
             return new SyntaxTree(new LexNode(newToken, TokenType.NUMBER));
         }
 
-        return new SyntaxTree(tree.node, left, right);
+        LexNode node = new LexNode(operator, TokenType.OPERATOR);
+        return new SyntaxTree(node, left, right);
     }
 
     @Contract(pure = true)
-    private static @NotNull String evalArithmetic(@NotNull String operator, @NotNull String leftToken, @NotNull String rightToken) {
-        BigDecimal left = new BigDecimal(leftToken);
-        BigDecimal right = new BigDecimal(rightToken);
+    private static @NotNull SyntaxTree standardize(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
+        boolean isLeftNumber = left.getTokenType() == TokenType.NUMBER;
+        boolean isRightNumber = right.getTokenType() == TokenType.NUMBER;
+        LexNode node = new LexNode(operator, TokenType.OPERATOR);
+        if (operator.equals(ADD) && isLeftNumber && !isRightNumber) {
+            return new SyntaxTree(node, right, left);
+        }
 
-        BigDecimal res = Operator.getFunction(operator).apply(left, right);
-        return res.toPlainString();
+        if (operator.equals(MUL) && !isLeftNumber && isRightNumber) {
+            return new SyntaxTree(node, right, left);
+        }
+
+        boolean isLeftVariable = left.expressionTypeEquals(ExpressionType.VARIABLE);
+        boolean isLeftPow = left.expressionTypeEquals(ExpressionType.POW) || isLeftVariable;
+
+        boolean isRightVariable = right.expressionTypeEquals(ExpressionType.VARIABLE);
+        boolean isRightPow = right.expressionTypeEquals(ExpressionType.POW) || isRightVariable;
+        if (operator.equals(ADD) && isLeftPow && isRightPow) {
+            return standardizePowers(node, left, right);
+        }
+
+        return new SyntaxTree(node, left, right);
+    }
+
+    private static @NotNull SyntaxTree standardizePowers(LexNode node, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
+        SyntaxTree leftBase = left.expressionTypeEquals(ExpressionType.POW) ? left.left : left;
+        SyntaxTree rightBase = right.expressionTypeEquals(ExpressionType.POW) ? right.left : right;
+
+        assert leftBase != null;
+        if (!leftBase.equals(rightBase)) {
+            return new SyntaxTree(node, left, right);
+        }
+
+        BigDecimal leftNum = left.right != null ? new BigDecimal(left.right.getToken()) : BigDecimal.ONE;
+        BigDecimal rightNum = right.right != null ? new BigDecimal(right.right.getToken()) : BigDecimal.ONE;
+
+        if (leftNum.compareTo(rightNum) < 0) {
+            return new SyntaxTree(node, right, left);
+        }
+
+        return new SyntaxTree(node, left, right);
     }
 
     @Contract(pure = true, value = "_ -> new")
     private static @NotNull List<SyntaxTree> makeSubTrees(@NotNull List<LexNode> lexNodes) throws InvalidExpressionException {
         List<SyntaxTree> subTrees = new ArrayList<>();
-        for (LexNode lexNode : lexNodes) {
+        for (var lexNode : lexNodes) {
             if (lexNode.type == TokenType.SUBEXPR) {
                 String subExpr = lexNode.token;
                 // Remove parentheses
-                String subExprNoParens = subExpr.substring(1, subExpr.length() - 1);
-                subTrees.add(parseExpr(subExprNoParens));
+                subExpr = subExpr.substring(1, subExpr.length() - 1);
+                subTrees.add(parseExpr(subExpr));
             } else {
                 subTrees.add(new SyntaxTree(lexNode));
             }
@@ -180,7 +227,7 @@ public final class ExpressionSimplifier {
         Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
         SyntaxTree operatorTree = null;
         for (SyntaxTree tree : trees) {
-            boolean isOperator = tree.getType() == TokenType.OPERATOR;
+            boolean isOperator = tree.getTokenType() == TokenType.OPERATOR;
             boolean isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {
