@@ -88,7 +88,7 @@ class ExpressionSimplifierTest {
 
     @ParameterizedTest
     @MethodSource("expressionsWithAssignedVariables")
-    void simplifyExpressionsWithAssignedVariables(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
+    void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
         assertEquals(expected, actual);
     }
