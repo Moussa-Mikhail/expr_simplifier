@@ -81,28 +81,14 @@ class ExpressionSimplifierTest {
 
     @ParameterizedTest
     @MethodSource("expressions")
-    void simplifyArithmeticExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr);
-        assertEquals(expected, actual);
-    }
-
-    @ParameterizedTest
-    @MethodSource("expressions")
-    void simplifyExpressionsWithCorrectParensTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr);
-        assertEquals(expected, actual);
-    }
-
-    @ParameterizedTest
-    @MethodSource("expressions")
-    void standardizeExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+    void simplifyExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr);
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressionsWithAssignedVariables")
-    void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
+    void simplifyExpressionsWithAssignedVariables(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
         assertEquals(expected, actual);
     }
