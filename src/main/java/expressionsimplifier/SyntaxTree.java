@@ -34,22 +34,12 @@ final class SyntaxTree {
         this.right = right;
     }
 
-    private static @NotNull String removeParens(@NotNull String expr) {
-        String firstChar = String.valueOf(expr.charAt(0));
-        String lastChar = String.valueOf(expr.charAt(expr.length() - 1));
-        if (firstChar.equals(LEFT_PAREN) && lastChar.equals(RIGHT_PAREN)) {
-            return expr.substring(1, expr.length() - 1);
-        }
-
-        return expr;
-    }
-
     public boolean isLeaf() {
         return left == null && right == null;
     }
 
-    public @NotNull TokenType getType() {
-        return node.type;
+    public boolean tokenTypeEquals(@NotNull TokenType type) {
+        return node.type == type;
     }
 
     public @NotNull String getToken() {
@@ -96,7 +86,7 @@ final class SyntaxTree {
         // Implicit multiplication
         if (node.token.equals(MUL)) {
             String expr = handleImplicitMultiplication();
-            if (!expr.isEmpty()) {
+            if (expr != null) {
                 return expr;
             }
         }
@@ -111,16 +101,16 @@ final class SyntaxTree {
         return String.format("%s%s%s", leftString, node, rightString);
     }
 
-    private @NotNull String handleImplicitMultiplication() {
+    private @Nullable String handleImplicitMultiplication() {
         assert left != null;
         assert right != null;
 
-        boolean isRightVariable = right.getType() == TokenType.VARIABLE;
+        boolean isRightVariable = right.tokenTypeEquals(TokenType.VARIABLE);
         if (left.getToken().equals(NEGATIVE_ONE) && isRightVariable) {
             return String.format("-%s", right);
         }
 
-        boolean isLeftNumber = left.getType() == TokenType.NUMBER;
+        boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
         if (isLeftNumber && isRightVariable) {
             return String.format("%s%s", left, right);
         }
@@ -135,7 +125,7 @@ final class SyntaxTree {
             return String.format("(%s)(%s)", left, right);
         }
 
-        return "";
+        return null;
     }
 
     private @NotNull String formatParens(@NotNull SyntaxTree child) {
@@ -144,11 +134,11 @@ final class SyntaxTree {
         childString = String.format("(%s)", childString);
 
         if (child.getPrecedence() >= this.getPrecedence()) {
-            childString = removeParens(childString);
+            childString = Utils.removeParens(childString);
         }
 
         if (child.isLeaf()) {
-            childString = removeParens(childString);
+            childString = Utils.removeParens(childString);
 
             if (childString.startsWith(SUB)) {
                 childString = String.format("(%s)", childString);
@@ -164,5 +154,41 @@ final class SyntaxTree {
         }
 
         return Operator.getPrecedence(getToken());
+    }
+
+    @SuppressWarnings("java:S3776")
+    public ExpressionType getExpressionType() {
+        if (isLeaf()) {
+            if (node.type == TokenType.NUMBER) {
+                return ExpressionType.NUMBER;
+            }
+
+            if (node.type == TokenType.VARIABLE) {
+                return ExpressionType.VARIABLE;
+            }
+        }
+
+        assert left != null;
+        assert right != null;
+        if (left.isLeaf() && right.isLeaf()) {
+            if (node.token.equals(POW)) {
+                if (left.expressionTypeEquals(ExpressionType.VARIABLE) && right.expressionTypeEquals(ExpressionType.NUMBER)) {
+                    return ExpressionType.POW;
+                }
+
+                if (left.expressionTypeEquals(ExpressionType.NUMBER) && right.expressionTypeEquals(ExpressionType.VARIABLE)) {
+                    return ExpressionType.NUMBER;
+                }
+
+                return ExpressionType.COMPLEX;
+            }
+            return ExpressionType.OPERATOR_TO_EXPRESSION_TYPE.get(node.token);
+        }
+
+        return ExpressionType.COMPLEX;
+    }
+
+    public boolean expressionTypeEquals(ExpressionType type) {
+        return getExpressionType() == type;
     }
 }
