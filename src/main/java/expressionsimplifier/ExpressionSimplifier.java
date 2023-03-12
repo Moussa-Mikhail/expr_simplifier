@@ -196,8 +196,7 @@ public final class ExpressionSimplifier {
         for (var lexNode : lexNodes) {
             if (lexNode.type == TokenType.SUBEXPR) {
                 String subExpr = lexNode.token;
-                // Remove parentheses
-                subExpr = subExpr.substring(1, subExpr.length() - 1);
+                subExpr = Utils.removeParens(subExpr);
                 subTrees.add(parseExpr(subExpr));
             } else {
                 subTrees.add(new SyntaxTree(lexNode));

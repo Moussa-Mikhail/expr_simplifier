@@ -34,16 +34,6 @@ final class SyntaxTree {
         this.right = right;
     }
 
-    private static @NotNull String removeParens(@NotNull String expr) {
-        String firstChar = String.valueOf(expr.charAt(0));
-        String lastChar = String.valueOf(expr.charAt(expr.length() - 1));
-        if (firstChar.equals(LEFT_PAREN) && lastChar.equals(RIGHT_PAREN)) {
-            return expr.substring(1, expr.length() - 1);
-        }
-
-        return expr;
-    }
-
     public boolean isLeaf() {
         return left == null && right == null;
     }
@@ -144,11 +134,11 @@ final class SyntaxTree {
         childString = String.format("(%s)", childString);
 
         if (child.getPrecedence() >= this.getPrecedence()) {
-            childString = removeParens(childString);
+            childString = Utils.removeParens(childString);
         }
 
         if (child.isLeaf()) {
-            childString = removeParens(childString);
+            childString = Utils.removeParens(childString);
 
             if (childString.startsWith(SUB)) {
                 childString = String.format("(%s)", childString);
