@@ -86,7 +86,7 @@ final class SyntaxTree {
         // Implicit multiplication
         if (node.token.equals(MUL)) {
             String expr = handleImplicitMultiplication();
-            if (!expr.isEmpty()) {
+            if (expr != null) {
                 return expr;
             }
         }
@@ -101,7 +101,7 @@ final class SyntaxTree {
         return String.format("%s%s%s", leftString, node, rightString);
     }
 
-    private @NotNull String handleImplicitMultiplication() {
+    private @Nullable String handleImplicitMultiplication() {
         assert left != null;
         assert right != null;
 
@@ -125,7 +125,7 @@ final class SyntaxTree {
             return String.format("(%s)(%s)", left, right);
         }
 
-        return "";
+        return null;
     }
 
     private @NotNull String formatParens(@NotNull SyntaxTree child) {
