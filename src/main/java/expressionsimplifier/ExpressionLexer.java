@@ -20,7 +20,7 @@ public final class ExpressionLexer {
     private @Nullable TokenType prevTokenType;
     private int currPos;
 
-    public ExpressionLexer(@NotNull String expr) {
+    public ExpressionLexer(String expr) {
         this.expr = expr.replaceAll("\\s+", "");
     }
 
@@ -110,7 +110,7 @@ public final class ExpressionLexer {
         return -1;
     }
 
-    private void handleNegativeSign(@NotNull String chr) {
+    private void handleNegativeSign(String chr) {
         boolean isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
         currPos++;
         if (isNextTokenNumber) {
@@ -123,7 +123,7 @@ public final class ExpressionLexer {
         }
     }
 
-    private void lexOperator(@NotNull String chr) {
+    private void lexOperator(String chr) {
         token = chr;
         prevTokenType = TokenType.OPERATOR;
         currPos++;
@@ -164,7 +164,7 @@ public final class ExpressionLexer {
     }
 
     @Contract(pure = true)
-    private int findEndOfExprComponent(int startIdx, @NotNull Predicate<Character> predicate) {
+    private int findEndOfExprComponent(int startIdx, Predicate<Character> predicate) {
         for (int idx = startIdx; idx < expr.length(); idx++) {
             char chr = expr.charAt(idx);
             if (!predicate.test(chr)) {
