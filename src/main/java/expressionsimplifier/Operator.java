@@ -15,11 +15,11 @@ import java.util.function.BinaryOperator;
  */
 public enum Operator {
     // Operators must be ordered by decreasing precedence.
-    POW("^", 2, Operator::pow),
-    MUL("*", 1, BigDecimal::multiply),
-    DIV("/", 1, BigDecimal::divide),
-    ADD("+", 0, BigDecimal::add),
-    SUB("-", 0, BigDecimal::subtract);
+    POW(Constants.POW, 2, Operator::pow),
+    MUL(Constants.MUL, 1, BigDecimal::multiply),
+    DIV(Constants.DIV, 1, BigDecimal::divide),
+    ADD(Constants.ADD, 0, BigDecimal::add),
+    SUB(Constants.SUB, 0, BigDecimal::subtract);
     public final String token;
     public final int precedence;
     public final BinaryOperator<BigDecimal> function;
@@ -74,7 +74,6 @@ public enum Operator {
     public static @NotNull Collection<Set<String>> tokensGroupedByPrecedence() {
         LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
         for (Operator op : Operator.values()) {
-
             int precedence = op.precedence;
             precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
             String token = op.token;
