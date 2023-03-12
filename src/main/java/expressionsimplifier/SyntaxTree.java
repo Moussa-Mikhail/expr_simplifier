@@ -12,13 +12,13 @@ final class SyntaxTree {
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
 
-    public SyntaxTree(@NotNull LexNode node) {
+    public SyntaxTree(LexNode node) {
         this.node = node;
         this.left = null;
         this.right = null;
     }
 
-    public SyntaxTree(@NotNull LexNode node, @Nullable SyntaxTree left, @Nullable SyntaxTree right) {
+    public SyntaxTree(LexNode node, @Nullable SyntaxTree left, @Nullable SyntaxTree right) {
         boolean bothNonNull = left != null && right != null;
         if (node.type == TokenType.OPERATOR && !bothNonNull) {
             throw new IllegalArgumentException("Operator nodes must have non-null children");
@@ -38,7 +38,7 @@ final class SyntaxTree {
         return left == null && right == null;
     }
 
-    public boolean tokenTypeEquals(@NotNull TokenType type) {
+    public boolean tokenTypeEquals(TokenType type) {
         return node.type == type;
     }
 
@@ -128,7 +128,7 @@ final class SyntaxTree {
         return null;
     }
 
-    private @NotNull String formatParens(@NotNull SyntaxTree child) {
+    private @NotNull String formatParens(SyntaxTree child) {
         // Expressions are parenthesized by default
         String childString = child.toString();
         childString = String.format("(%s)", childString);

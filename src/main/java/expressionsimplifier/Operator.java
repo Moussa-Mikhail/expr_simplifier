@@ -20,9 +20,9 @@ public enum Operator {
     DIV(Constants.DIV, 1, BigDecimal::divide),
     ADD(Constants.ADD, 0, BigDecimal::add),
     SUB(Constants.SUB, 0, BigDecimal::subtract);
-    public final String token;
+    public final @NotNull String token;
     public final int precedence;
-    public final BinaryOperator<BigDecimal> function;
+    public final @NotNull BinaryOperator<BigDecimal> function;
 
     Operator(String token, int precedence, BinaryOperator<BigDecimal> function) {
         this.token = token;
@@ -30,7 +30,7 @@ public enum Operator {
         this.function = function;
     }
 
-    private static @NotNull BigDecimal pow(@NotNull BigDecimal a, @NotNull BigDecimal b) {
+    private static @NotNull BigDecimal pow(BigDecimal a, BigDecimal b) {
         try {
             BigInteger bigIntegerA = a.toBigIntegerExact();
             BigInteger bigIntegerB = b.toBigIntegerExact();
@@ -42,7 +42,7 @@ public enum Operator {
         }
     }
 
-    public static BinaryOperator<BigDecimal> getFunction(String token) {
+    public static @NotNull BinaryOperator<BigDecimal> getFunction(String token) {
         for (Operator op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.function;
