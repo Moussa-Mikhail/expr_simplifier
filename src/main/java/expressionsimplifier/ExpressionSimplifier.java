@@ -44,7 +44,7 @@ public final class ExpressionSimplifier {
         System.out.println(simplifiedExpr);
     }
 
-    @Contract(pure = true)
+    @Contract(pure = true, value = "_, _ -> new")
     public static @NotNull String simplifyExpr(@NotNull String expr, @NotNull List<String> variableValues) throws InvalidExpressionException {
         SyntaxTree syntaxTree = parseExpr(expr);
         Map<String, String> variableToValue = parseInputVariablesValues(variableValues);
@@ -55,12 +55,12 @@ public final class ExpressionSimplifier {
         return simplifiedTree.toString();
     }
 
-    @Contract(pure = true)
+    @Contract(pure = true, value = "_, _ -> new")
     public static @NotNull String simplifyExpr(@NotNull String expr, String @NotNull ... variableValues) throws InvalidExpressionException {
         return simplifyExpr(expr, Arrays.asList(variableValues));
     }
 
-    @Contract(pure = true)
+    @Contract(pure = true, value = "_ -> new")
     private static @NotNull SyntaxTree parseExpr(@NotNull String expr) throws InvalidExpressionException {
         ExpressionLexer lexer = new ExpressionLexer(expr);
         lexer.lexExpression();
@@ -106,7 +106,7 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, subbedLeft, subbedRight);
     }
 
-    @Contract(pure = true, value = "_ -> new")
+    @Contract(pure = true)
     private static @NotNull SyntaxTree simplify(@NotNull SyntaxTree tree) {
         SyntaxTree simplifiedTree = tree;
         List<Simplifier> simplifiers = List.of(ExpressionSimplifier::foldConstants, ExpressionSimplifier::standardize);
@@ -131,7 +131,7 @@ public final class ExpressionSimplifier {
         //and distributive property
     }
 
-    @Contract(pure = true)
+    @Contract(pure = true, value = "_, _, _ -> new")
     private static @NotNull SyntaxTree foldConstants(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
         if (left.tokenTypeEquals(TokenType.NUMBER) && right.tokenTypeEquals(TokenType.NUMBER)) {
             BigDecimal leftNum = new BigDecimal(left.getToken());
@@ -146,7 +146,7 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, left, right);
     }
 
-    @Contract(pure = true)
+    @Contract(pure = true, value = "_, _, _ -> new")
     private static @NotNull SyntaxTree standardize(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
         boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
         boolean isRightNumber = right.tokenTypeEquals(TokenType.NUMBER);
@@ -171,7 +171,8 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, left, right);
     }
 
-    private static @NotNull SyntaxTree standardizePowers(LexNode node, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
+    @Contract(pure = true, value = "_, _, _ -> new")
+    private static @NotNull SyntaxTree standardizePowers(@NotNull LexNode node, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
         SyntaxTree leftBase = left.expressionTypeEquals(ExpressionType.POW) ? left.left : left;
         SyntaxTree rightBase = right.expressionTypeEquals(ExpressionType.POW) ? right.left : right;
 
@@ -216,6 +217,10 @@ public final class ExpressionSimplifier {
         for (Set<String> operators : Operator.tokensGroupedByPrecedence()) {
             // Building the complete tree from subtrees must respect operator precedence.
             newSubTrees = buildTree(newSubTrees, operators);
+        }
+
+        if (newSubTrees.size() != 1) {
+            throw new InvalidExpressionException("Invalid expression");
         }
 
         return newSubTrees.get(0);
