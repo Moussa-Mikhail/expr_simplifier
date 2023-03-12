@@ -14,7 +14,7 @@ import static expressionsimplifier.Constants.*;
  * @author Moussa
  */
 public final class ExpressionLexer {
-    private final @NotNull List<LexNode> lexNodes = new ArrayList<>();
+    private final @NotNull List<@NotNull LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";
     private @Nullable TokenType prevTokenType;
@@ -24,7 +24,7 @@ public final class ExpressionLexer {
         this.expr = expr.replaceAll("\\s+", "");
     }
 
-    public @NotNull List<LexNode> getLexNodes() {
+    public @NotNull List<@NotNull LexNode> getLexNodes() {
         return lexNodes;
     }
 
