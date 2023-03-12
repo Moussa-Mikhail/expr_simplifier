@@ -50,7 +50,21 @@ class ExpressionSimplifierTest {
                 Arguments.of("x^2+x^3", "x^3 + x^2"),
                 Arguments.of("x*2", "2x"),
                 Arguments.of("2*x", "2x"),
-                Arguments.of("x*2*y", "2x*y")
+                Arguments.of("x*2*y", "2x*y"),
+                Arguments.of("1*x", "x"),
+                Arguments.of("x*1", "x"),
+                Arguments.of("x+0", "x"),
+                Arguments.of("(x+y^2)-(x+y^2)", "0"),
+                Arguments.of("x^2-x^2", "0"),
+                Arguments.of("x*0", "0"),
+                Arguments.of("0*(1+2x+3x^2)", "0"),
+                Arguments.of("x/x", "1"),
+                Arguments.of("x^2/x^2", "1"),
+                Arguments.of("(x-1+y*2+z)/(x-1+y*2+z)", "1"),
+                Arguments.of("x^1", "x"),
+                Arguments.of("x^0", "1"),
+                Arguments.of("(2x+3y-1z)^1", "2x+3y-1z"),
+                Arguments.of("(2x+3y-1z)^0", "1")
         );
     }
 
