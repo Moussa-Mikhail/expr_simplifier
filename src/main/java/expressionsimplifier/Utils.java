@@ -8,6 +8,7 @@ import static expressionsimplifier.Constants.RIGHT_PAREN;
 public final class Utils {
     private Utils() {
     }
+
     public static @NotNull String removeParens(String expr) {
         String firstChar = String.valueOf(expr.charAt(0));
         String lastChar = String.valueOf(expr.charAt(expr.length() - 1));
