@@ -133,7 +133,7 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true)
     private static @NotNull SyntaxTree foldConstants(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
-        if (left.getTokenType() == TokenType.NUMBER && right.getTokenType() == TokenType.NUMBER) {
+        if (left.tokenTypeEquals(TokenType.NUMBER) && right.tokenTypeEquals(TokenType.NUMBER)) {
             BigDecimal leftNum = new BigDecimal(left.getToken());
             BigDecimal rightNum = new BigDecimal(right.getToken());
 
@@ -148,8 +148,8 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true)
     private static @NotNull SyntaxTree standardize(@NotNull String operator, @NotNull SyntaxTree left, @NotNull SyntaxTree right) {
-        boolean isLeftNumber = left.getTokenType() == TokenType.NUMBER;
-        boolean isRightNumber = right.getTokenType() == TokenType.NUMBER;
+        boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
+        boolean isRightNumber = right.tokenTypeEquals(TokenType.NUMBER);
         LexNode node = new LexNode(operator, TokenType.OPERATOR);
         if (operator.equals(ADD) && isLeftNumber && !isRightNumber) {
             return new SyntaxTree(node, right, left);
@@ -226,7 +226,7 @@ public final class ExpressionSimplifier {
         Deque<SyntaxTree> subTreesStack = new ArrayDeque<>();
         SyntaxTree operatorTree = null;
         for (SyntaxTree tree : trees) {
-            boolean isOperator = tree.getTokenType() == TokenType.OPERATOR;
+            boolean isOperator = tree.tokenTypeEquals(TokenType.OPERATOR);
             boolean isCorrectOperator = operators.contains(tree.getToken());
 
             if (isOperator && isCorrectOperator && tree.isLeaf()) {

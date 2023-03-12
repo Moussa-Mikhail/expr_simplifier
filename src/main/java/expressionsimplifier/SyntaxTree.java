@@ -38,8 +38,8 @@ final class SyntaxTree {
         return left == null && right == null;
     }
 
-    public @NotNull TokenType getTokenType() {
-        return node.type;
+    public boolean tokenTypeEquals(@NotNull TokenType type) {
+        return node.type == type;
     }
 
     public @NotNull String getToken() {
@@ -105,12 +105,12 @@ final class SyntaxTree {
         assert left != null;
         assert right != null;
 
-        boolean isRightVariable = right.getTokenType() == TokenType.VARIABLE;
+        boolean isRightVariable = right.tokenTypeEquals(TokenType.VARIABLE);
         if (left.getToken().equals(NEGATIVE_ONE) && isRightVariable) {
             return String.format("-%s", right);
         }
 
-        boolean isLeftNumber = left.getTokenType() == TokenType.NUMBER;
+        boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
         if (isLeftNumber && isRightVariable) {
             return String.format("%s%s", left, right);
         }
