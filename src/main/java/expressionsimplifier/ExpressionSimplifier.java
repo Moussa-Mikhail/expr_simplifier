@@ -61,9 +61,8 @@ public final class ExpressionSimplifier {
     private static @NotNull SyntaxTree parseExpr(String expr) throws InvalidExpressionException {
         var lexer = new ExpressionLexer(expr);
         lexer.lexExpression();
-        var lexNodes = lexer.getLexNodes();
-
-        return buildTree(makeSubTrees(lexNodes));
+        List<@NotNull LexNode> lexNodes = lexer.getLexNodes();
+        return buildTree(lexNodes);
     }
 
     @Contract(pure = true)
@@ -206,7 +205,8 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true)
-    private static @NotNull SyntaxTree buildTree(List<@NotNull SyntaxTree> subTrees) throws InvalidExpressionException {
+    private static @NotNull SyntaxTree buildTree(List<@NotNull LexNode> lexNodes) throws InvalidExpressionException {
+        List<@NotNull SyntaxTree> subTrees = makeSubTrees(lexNodes);
         if (subTrees.size() == 1) {
             return subTrees.get(0);
         }
