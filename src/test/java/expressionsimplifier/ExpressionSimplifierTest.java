@@ -63,7 +63,7 @@ class ExpressionSimplifierTest {
                 Arguments.of("(x-1+y*2+z)/(x-1+y*2+z)", "1"),
                 Arguments.of("x^1", "x"),
                 Arguments.of("x^0", "1"),
-                Arguments.of("(2x+3y-1z)^1", "2x+3y-1z"),
+                Arguments.of("(2x+3y-1z)^1", "2x + 3y - z"),
                 Arguments.of("(2x+3y-1z)^0", "1")
         );
     }

@@ -13,8 +13,7 @@ import static expressionsimplifier.Constants.*;
  * @author Moussa
  */
 public final class ExpressionSimplifier {
-    private ExpressionSimplifier() {
-    }
+    private ExpressionSimplifier() {}
 
     @Contract(pure = true)
     public static void main(@NotNull String... args) {
@@ -104,7 +103,11 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     private static @NotNull SyntaxTree simplify(SyntaxTree tree) {
         SyntaxTree simplifiedTree = tree;
-        List<@NotNull Simplifier> simplifiers = List.of(ExpressionSimplifier::foldConstants, ExpressionSimplifier::standardize);
+        List<@NotNull Simplifier> simplifiers = List.of(
+                ExpressionSimplifier::foldConstants,
+                ExpressionSimplifier::standardize,
+                ExpressionSimplifier::applyAlgebraicIdentities
+        );
         for (var simplifier : simplifiers) {
             if (simplifiedTree.isLeaf()) {
                 return simplifiedTree;
@@ -186,6 +189,52 @@ public final class ExpressionSimplifier {
         }
 
         return new SyntaxTree(node, left, right);
+    }
+
+    @SuppressWarnings("java:S3776")
+    @Contract(pure = true)
+    private static @NotNull SyntaxTree applyAlgebraicIdentities(String operator, SyntaxTree left, SyntaxTree right) {
+        if (operator.equals(ADD) && "0".equals(right.getToken())) {
+            return left;
+        }
+
+        if (operator.equals(SUB) && "0".equals(right.getToken())) {
+            return left;
+        }
+
+        if (operator.equals(SUB) && left.equals(right)) {
+            return new SyntaxTree(new LexNode("0", TokenType.NUMBER));
+        }
+
+        if (operator.equals(MUL) && "1".equals(left.getToken())) {
+            return right;
+        }
+
+        if (operator.equals(MUL) && "0".equals(left.getToken())) {
+            return new SyntaxTree(new LexNode("0", TokenType.NUMBER));
+        }
+
+        if (operator.equals(DIV) && "1".equals(right.getToken())) {
+            return left;
+        }
+
+        if (operator.equals(DIV) && left.equals(right)) {
+            return new SyntaxTree(new LexNode("1", TokenType.NUMBER));
+        }
+
+        if (operator.equals(DIV) && "0".equals(right.getToken())) {
+            throw new ArithmeticException("Division by zero");
+        }
+
+        if (operator.equals(POW) && "1".equals(right.getToken())) {
+            return left;
+        }
+
+        if (operator.equals(POW) && "0".equals(right.getToken())) {
+            return new SyntaxTree(new LexNode("1", TokenType.NUMBER));
+        }
+
+        return new SyntaxTree(new LexNode(operator, TokenType.OPERATOR), left, right);
     }
 
     @Contract(pure = true, value = "_ -> new")
