@@ -212,7 +212,7 @@ public final class ExpressionSimplifier {
         }
 
         List<@NotNull SyntaxTree> newSubTrees = new ArrayList<>(subTrees);
-        for (Set<@NotNull String> operators : Operator.tokensGroupedByPrecedence()) {
+        for (Set<@NotNull String> operators : OPERATOR_TOKENS_GROUPED_BY_PRECEDENCE) {
             // Building the complete tree from subtrees must respect operator precedence.
             newSubTrees = buildTree(newSubTrees, operators);
         }
