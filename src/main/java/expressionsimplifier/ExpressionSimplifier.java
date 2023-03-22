@@ -100,8 +100,37 @@ public final class ExpressionSimplifier {
         return new SyntaxTree(node, subbedLeft, subbedRight);
     }
 
+    private static boolean equalsZero(String token) {
+        return BigDecimal.ZERO.compareTo(new BigDecimal(token)) == 0;
+    }
+
+    private static boolean isNegative(String token) {
+        return (new BigDecimal(token)).compareTo(BigDecimal.ZERO) < 0;
+    }
+
     @Contract(pure = true)
-    private static @NotNull SyntaxTree simplify(SyntaxTree tree) {
+    private static void checkInvalidExpr(String operator, SyntaxTree left, SyntaxTree right) throws InvalidExpressionException {
+        String rightToken = right.getToken();
+        if (operator.equals(DIV) && right.tokenTypeEquals(TokenType.NUMBER) && equalsZero(rightToken)) {
+            throw new InvalidExpressionException("Division by zero");
+        }
+
+        String leftToken = left.getToken();
+        if (operator.equals(POW) && left.tokenTypeEquals(TokenType.NUMBER) && equalsZero(leftToken) && (isNegative(
+                rightToken))) {
+            throw new InvalidExpressionException("Division by zero");
+        }
+
+        if (operator.equals(POW) && left.tokenTypeEquals(TokenType.NUMBER) && isNegative(leftToken)) {
+            var power = new BigDecimal(rightToken);
+            if (power.stripTrailingZeros().scale() > 0) {
+                throw new InvalidExpressionException("Negative number raised to non-integer exponent.");
+            }
+        }
+    }
+
+    @Contract(pure = true)
+    private static @NotNull SyntaxTree simplify(SyntaxTree tree) throws InvalidExpressionException {
         SyntaxTree simplifiedTree = tree;
         List<@NotNull Simplifier> simplifiers = List.of(
                 ExpressionSimplifier::foldConstants,
@@ -118,16 +147,15 @@ public final class ExpressionSimplifier {
             LexNode node = simplifiedTree.node;
             SyntaxTree left = simplify(simplifiedTree.left);
             SyntaxTree right = simplify(simplifiedTree.right);
+            checkInvalidExpr(node.token, left, right);
             simplifiedTree = simplifier.simplify(node.token, left, right);
         }
 
         return simplifiedTree;
 
-        //TODO: implement other simplifications
-        //double negatives
-        //and 0*x = 0
-        //and 1*x = x
-        //and distributive property
+        // TODO: implement other simplifications
+        // double negatives
+        // and distributive property
     }
 
     @Contract(pure = true, value = "_, _, _ -> new")
@@ -194,11 +222,12 @@ public final class ExpressionSimplifier {
     @SuppressWarnings("java:S3776")
     @Contract(pure = true)
     private static @NotNull SyntaxTree applyAlgebraicIdentities(String operator, SyntaxTree left, SyntaxTree right) {
-        if (operator.equals(ADD) && "0".equals(right.getToken())) {
+        String rightToken = right.getToken();
+        if (operator.equals(ADD) && "0".equals(rightToken)) {
             return left;
         }
 
-        if (operator.equals(SUB) && "0".equals(right.getToken())) {
+        if (operator.equals(SUB) && "0".equals(rightToken)) {
             return left;
         }
 
@@ -206,15 +235,16 @@ public final class ExpressionSimplifier {
             return new SyntaxTree(new LexNode("0", TokenType.NUMBER));
         }
 
-        if (operator.equals(MUL) && "1".equals(left.getToken())) {
+        String leftToken = left.getToken();
+        if (operator.equals(MUL) && "1".equals(leftToken)) {
             return right;
         }
 
-        if (operator.equals(MUL) && "0".equals(left.getToken())) {
+        if (operator.equals(MUL) && "0".equals(leftToken)) {
             return new SyntaxTree(new LexNode("0", TokenType.NUMBER));
         }
 
-        if (operator.equals(DIV) && "1".equals(right.getToken())) {
+        if (operator.equals(DIV) && "1".equals(rightToken)) {
             return left;
         }
 
@@ -222,15 +252,20 @@ public final class ExpressionSimplifier {
             return new SyntaxTree(new LexNode("1", TokenType.NUMBER));
         }
 
-        if (operator.equals(DIV) && "0".equals(right.getToken())) {
-            throw new ArithmeticException("Division by zero");
-        }
-
-        if (operator.equals(POW) && "1".equals(right.getToken())) {
+        if (operator.equals(POW) && "1".equals(rightToken)) {
             return left;
         }
 
-        if (operator.equals(POW) && "0".equals(right.getToken())) {
+        if (operator.equals(POW) && "0".equals(leftToken)) {
+            var power = new BigDecimal(rightToken);
+            if (power.compareTo(BigDecimal.ZERO) == 0) {
+                return new SyntaxTree(new LexNode("1", TokenType.NUMBER));
+            }
+
+            return new SyntaxTree(new LexNode("0", TokenType.NUMBER));
+        }
+
+        if (operator.equals(POW) && "0".equals(rightToken)) {
             return new SyntaxTree(new LexNode("1", TokenType.NUMBER));
         }
 
