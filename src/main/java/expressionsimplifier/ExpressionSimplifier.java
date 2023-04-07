@@ -111,17 +111,16 @@ public final class ExpressionSimplifier {
     @Contract(pure = true)
     private static void checkInvalidExpr(String operator, SyntaxTree left, SyntaxTree right) throws InvalidExpressionException {
         String rightToken = right.getToken();
-        if (operator.equals(DIV) && right.tokenTypeEquals(TokenType.NUMBER) && equalsZero(rightToken)) {
+        if (operator.equals(DIV) && right.isNumber() && equalsZero(rightToken)) {
             throw new InvalidExpressionException("Division by zero");
         }
 
         String leftToken = left.getToken();
-        if (operator.equals(POW) && left.tokenTypeEquals(TokenType.NUMBER) && equalsZero(leftToken) && (isNegative(
-                rightToken))) {
+        if (operator.equals(POW) && left.isNumber() && equalsZero(leftToken) && (isNegative(rightToken))) {
             throw new InvalidExpressionException("Division by zero");
         }
 
-        if (operator.equals(POW) && left.tokenTypeEquals(TokenType.NUMBER) && isNegative(leftToken)) {
+        if (operator.equals(POW) && left.isNumber() && isNegative(leftToken)) {
             var power = new BigDecimal(rightToken);
             if (power.stripTrailingZeros().scale() > 0) {
                 throw new InvalidExpressionException("Negative number raised to non-integer exponent.");
@@ -160,7 +159,7 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true, value = "_, _, _ -> new")
     private static @NotNull SyntaxTree foldConstants(String operator, SyntaxTree left, SyntaxTree right) {
-        if (left.tokenTypeEquals(TokenType.NUMBER) && right.tokenTypeEquals(TokenType.NUMBER)) {
+        if (left.isNumber() && right.isNumber()) {
             var leftNum = new BigDecimal(left.getToken());
             var rightNum = new BigDecimal(right.getToken());
 
@@ -176,8 +175,8 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true, value = "_, _, _ -> new")
     private static @NotNull SyntaxTree standardize(String operator, SyntaxTree left, SyntaxTree right) {
-        boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
-        boolean isRightNumber = right.tokenTypeEquals(TokenType.NUMBER);
+        boolean isLeftNumber = left.isNumber();
+        boolean isRightNumber = right.isNumber();
         var node = new LexNode(operator, TokenType.OPERATOR);
         if (operator.equals(ADD) && isLeftNumber && !isRightNumber) {
             return new SyntaxTree(node, right, left);
@@ -188,10 +187,10 @@ public final class ExpressionSimplifier {
         }
 
         boolean isLeftVariable = left.expressionTypeEquals(ExpressionType.VARIABLE);
-        boolean isLeftPow = left.expressionTypeEquals(ExpressionType.POW) || isLeftVariable;
+        boolean isLeftPow = left.expressionTypeEquals(ExpressionType.POLY) || isLeftVariable;
 
         boolean isRightVariable = right.expressionTypeEquals(ExpressionType.VARIABLE);
-        boolean isRightPow = right.expressionTypeEquals(ExpressionType.POW) || isRightVariable;
+        boolean isRightPow = right.expressionTypeEquals(ExpressionType.POLY) || isRightVariable;
         if (operator.equals(ADD) && isLeftPow && isRightPow) {
             return standardizePowers(node, left, right);
         }
@@ -201,8 +200,8 @@ public final class ExpressionSimplifier {
 
     @Contract(pure = true, value = "_, _, _ -> new")
     private static @NotNull SyntaxTree standardizePowers(LexNode node, SyntaxTree left, SyntaxTree right) {
-        SyntaxTree leftBase = left.expressionTypeEquals(ExpressionType.POW) ? left.left : left;
-        SyntaxTree rightBase = right.expressionTypeEquals(ExpressionType.POW) ? right.left : right;
+        SyntaxTree leftBase = left.expressionTypeEquals(ExpressionType.POLY) ? left.left : left;
+        SyntaxTree rightBase = right.expressionTypeEquals(ExpressionType.POLY) ? right.left : right;
 
         assert leftBase != null;
         if (!leftBase.equals(rightBase)) {
