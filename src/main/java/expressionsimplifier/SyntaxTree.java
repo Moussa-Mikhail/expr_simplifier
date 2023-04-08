@@ -42,6 +42,10 @@ final class SyntaxTree {
         return node.type == type;
     }
 
+    boolean isNumber() {
+        return tokenTypeEquals(TokenType.NUMBER);
+    }
+
     public @NotNull String getToken() {
         return node.token;
     }
@@ -173,11 +177,11 @@ final class SyntaxTree {
         if (left.isLeaf() && right.isLeaf()) {
             if (node.token.equals(POW)) {
                 if (left.expressionTypeEquals(ExpressionType.VARIABLE) && right.expressionTypeEquals(ExpressionType.NUMBER)) {
-                    return ExpressionType.POW;
+                    return ExpressionType.POLY;
                 }
 
-                if (left.expressionTypeEquals(ExpressionType.NUMBER) && right.expressionTypeEquals(ExpressionType.VARIABLE)) {
-                    return ExpressionType.NUMBER;
+                if (left.expressionTypeEquals(ExpressionType.NUMBER) && !right.expressionTypeEquals(ExpressionType.NUMBER)) {
+                    return ExpressionType.EXP;
                 }
 
                 return ExpressionType.COMPLEX;

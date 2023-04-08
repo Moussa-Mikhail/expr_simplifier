@@ -9,7 +9,7 @@ public enum ExpressionType {
     DIFF,
     PROD,
     DIV,
-    POW,
+    POLY,
     EXP,
     // Catchall type for expressions that are not simple
     COMPLEX;
@@ -18,6 +18,6 @@ public enum ExpressionType {
             Map.entry(Constants.SUB, DIFF),
             Map.entry(Constants.MUL, PROD),
             Map.entry(Constants.DIV, DIV),
-            Map.entry(Constants.POW, POW)
+            Map.entry(Constants.POW, POLY)
     );
 }

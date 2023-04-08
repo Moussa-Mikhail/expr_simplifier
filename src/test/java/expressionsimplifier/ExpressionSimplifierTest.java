@@ -67,11 +67,13 @@ class ExpressionSimplifierTest {
                 Arguments.of("(2x+3y-1z)^1", "2x + 3y - z"),
                 Arguments.of("(2x+3y-1z)^0", "1"),
                 Arguments.of("0^2", "0"),
-                Arguments.of("0^0", "1")
+                Arguments.of("0^0", "1"),
+                Arguments.of("-(-2)(x+y)", "2(x + y)"),
+                Arguments.of("-(x+y)(-2)", "2(x + y)")
         );
     }
 
-    public static @NotNull Stream<Arguments> expressionsWithAssignedVariables() {
+    public static @NotNull Stream<Arguments> expressionsWithSubstitutions() {
         return Stream.of(
                 Arguments.of("x", List.of("x=1"), "1"),
                 Arguments.of("-x", List.of("x=1"), "-1"),
@@ -107,9 +109,9 @@ class ExpressionSimplifierTest {
     }
 
     @ParameterizedTest
-    @MethodSource("expressionsWithAssignedVariables")
+    @MethodSource("expressionsWithSubstitutions")
     void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
+        String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues);
         assertEquals(expected, actual);
     }
 
@@ -124,7 +126,6 @@ class ExpressionSimplifierTest {
     @ParameterizedTest
     @MethodSource("invalidExpressions")
     void invalidExpressionsTest(@NotNull String expr) {
-        //noinspection ResultOfMethodCallIgnored
         assertThrows(InvalidExpressionException.class, () -> ExpressionSimplifier.simplifyExpr(expr));
     }
 }

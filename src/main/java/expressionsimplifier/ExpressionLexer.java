@@ -46,10 +46,6 @@ public final class ExpressionLexer {
             } else if (chr.equals(NEGATIVE_SIGN) && (isPrevOperator || isAtBeginning)) {
                 handleNegativeSign(chr);
             } else if (OPERATOR_TOKENS.contains(chr)) {
-                if (prevTokenType == TokenType.OPERATOR) {
-                    throw new InvalidExpressionException("Two operators in a row");
-                }
-
                 lexOperator(chr);
             } else if (Character.isDigit(chr.charAt(0))) {
                 lexNumber();
@@ -123,7 +119,11 @@ public final class ExpressionLexer {
         }
     }
 
-    private void lexOperator(String chr) {
+    private void lexOperator(String chr) throws InvalidExpressionException {
+        if (prevTokenType == TokenType.OPERATOR) {
+            throw new InvalidExpressionException("Two operators in a row");
+        }
+
         token = chr;
         prevTokenType = TokenType.OPERATOR;
         currPos++;

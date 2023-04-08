@@ -69,14 +69,14 @@ public enum Operator {
     }
 
     public static @NotNull Collection<@NotNull Set<@NotNull String>> tokensGroupedByPrecedence() {
-        LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
+        LinkedHashMap<Integer, Set<String>> precedenceToTokensSet = new LinkedHashMap<>();
         for (var op : Operator.values()) {
             int precedence = op.precedence;
-            precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
+            precedenceToTokensSet.putIfAbsent(precedence, new HashSet<>());
             String token = op.token;
-            precedenceToTokens.get(precedence).add(token);
+            precedenceToTokensSet.get(precedence).add(token);
         }
 
-        return precedenceToTokens.values();
+        return precedenceToTokensSet.values();
     }
 }
