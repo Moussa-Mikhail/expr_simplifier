@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ExpressionSimplifierTest {
     public static @NotNull Stream<Arguments> expressions() {
@@ -50,11 +51,29 @@ class ExpressionSimplifierTest {
                 Arguments.of("x^2+x^3", "x^3 + x^2"),
                 Arguments.of("x*2", "2x"),
                 Arguments.of("2*x", "2x"),
-                Arguments.of("x*2*y", "2x*y")
+                Arguments.of("x*2*y", "2x*y"),
+                Arguments.of("1*x", "x"),
+                Arguments.of("x*1", "x"),
+                Arguments.of("x+0", "x"),
+                Arguments.of("(x+y^2)-(x+y^2)", "0"),
+                Arguments.of("x^2-x^2", "0"),
+                Arguments.of("x*0", "0"),
+                Arguments.of("0*(1+2x+3x^2)", "0"),
+                Arguments.of("x/x", "1"),
+                Arguments.of("x^2/x^2", "1"),
+                Arguments.of("(x-1+y*2+z)/(x-1+y*2+z)", "1"),
+                Arguments.of("x^1", "x"),
+                Arguments.of("x^0", "1"),
+                Arguments.of("(2x+3y-1z)^1", "2x + 3y - z"),
+                Arguments.of("(2x+3y-1z)^0", "1"),
+                Arguments.of("0^2", "0"),
+                Arguments.of("0^0", "1"),
+                Arguments.of("-(-2)(x+y)", "2(x + y)"),
+                Arguments.of("-(x+y)(-2)", "2(x + y)")
         );
     }
 
-    public static @NotNull Stream<Arguments> expressionsWithAssignedVariables() {
+    public static @NotNull Stream<Arguments> expressionsWithSubstitutions() {
         return Stream.of(
                 Arguments.of("x", List.of("x=1"), "1"),
                 Arguments.of("-x", List.of("x=1"), "-1"),
@@ -65,31 +84,34 @@ class ExpressionSimplifierTest {
         );
     }
 
+    public static @NotNull Stream<Arguments> invalidExpressions() {
+        return Stream.of(
+                Arguments.of("."),
+                Arguments.of("--"),
+                Arguments.of("1+"),
+                Arguments.of("1+1+"),
+                Arguments.of("1++"),
+                Arguments.of("1*+1"),
+                Arguments.of("1//2"),
+                Arguments.of("1/0"),
+                Arguments.of("1/0.0"),
+                Arguments.of("0^(-1)"),
+                Arguments.of("0^(-0.1)"),
+                Arguments.of("(-1)^(1/2)")
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("expressions")
-    void simplifyArithmeticExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+    void simplifyExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr);
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
-    @MethodSource("expressions")
-    void simplifyExpressionsWithCorrectParensTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr);
-        assertEquals(expected, actual);
-    }
-
-    @ParameterizedTest
-    @MethodSource("expressions")
-    void standardizeExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr);
-        assertEquals(expected, actual);
-    }
-
-    @ParameterizedTest
-    @MethodSource("expressionsWithAssignedVariables")
+    @MethodSource("expressionsWithSubstitutions")
     void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
-        String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues.toArray(String[]::new));
+        String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues);
         assertEquals(expected, actual);
     }
 
@@ -99,5 +121,11 @@ class ExpressionSimplifierTest {
         String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
         String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
         assertEquals(simplifiedExpr, reSimplifiedExpr);
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidExpressions")
+    void invalidExpressionsTest(@NotNull String expr) {
+        assertThrows(InvalidExpressionException.class, () -> ExpressionSimplifier.simplifyExpr(expr));
     }
 }

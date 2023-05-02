@@ -14,17 +14,17 @@ import static expressionsimplifier.Constants.*;
  * @author Moussa
  */
 public final class ExpressionLexer {
-    private final @NotNull List<LexNode> lexNodes = new ArrayList<>();
+    private final @NotNull List<@NotNull LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";
     private @Nullable TokenType prevTokenType;
     private int currPos;
 
-    public ExpressionLexer(@NotNull String expr) {
+    public ExpressionLexer(String expr) {
         this.expr = expr.replaceAll("\\s+", "");
     }
 
-    public @NotNull List<LexNode> getLexNodes() {
+    public @NotNull List<@NotNull LexNode> getLexNodes() {
         return lexNodes;
     }
 
@@ -46,10 +46,6 @@ public final class ExpressionLexer {
             } else if (chr.equals(NEGATIVE_SIGN) && (isPrevOperator || isAtBeginning)) {
                 handleNegativeSign(chr);
             } else if (OPERATOR_TOKENS.contains(chr)) {
-                if (prevTokenType == TokenType.OPERATOR) {
-                    throw new InvalidExpressionException("Two operators in a row");
-                }
-
                 lexOperator(chr);
             } else if (Character.isDigit(chr.charAt(0))) {
                 lexNumber();
@@ -110,7 +106,7 @@ public final class ExpressionLexer {
         return -1;
     }
 
-    private void handleNegativeSign(@NotNull String chr) {
+    private void handleNegativeSign(String chr) {
         boolean isNextTokenNumber = Character.isDigit(expr.charAt(currPos + 1));
         currPos++;
         if (isNextTokenNumber) {
@@ -123,7 +119,11 @@ public final class ExpressionLexer {
         }
     }
 
-    private void lexOperator(@NotNull String chr) {
+    private void lexOperator(String chr) throws InvalidExpressionException {
+        if (prevTokenType == TokenType.OPERATOR) {
+            throw new InvalidExpressionException("Two operators in a row");
+        }
+
         token = chr;
         prevTokenType = TokenType.OPERATOR;
         currPos++;
@@ -164,7 +164,7 @@ public final class ExpressionLexer {
     }
 
     @Contract(pure = true)
-    private int findEndOfExprComponent(int startIdx, @NotNull Predicate<Character> predicate) {
+    private int findEndOfExprComponent(int startIdx, Predicate<Character> predicate) {
         for (int idx = startIdx; idx < expr.length(); idx++) {
             char chr = expr.charAt(idx);
             if (!predicate.test(chr)) {

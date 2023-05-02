@@ -1,6 +1,7 @@
 package expressionsimplifier;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -8,7 +9,7 @@ final class LexNode {
     public final @NotNull String token;
     public final @NotNull TokenType type;
 
-    public LexNode(@NotNull String token, @NotNull TokenType type) {
+    public LexNode(String token, TokenType type) {
         this.token = token;
         this.type = type;
     }
@@ -19,7 +20,7 @@ final class LexNode {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) {
             return true;
         }

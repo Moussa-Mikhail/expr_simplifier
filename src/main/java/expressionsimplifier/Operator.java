@@ -4,10 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BinaryOperator;
 
 /**
@@ -20,9 +17,9 @@ public enum Operator {
     DIV(Constants.DIV, 1, BigDecimal::divide),
     ADD(Constants.ADD, 0, BigDecimal::add),
     SUB(Constants.SUB, 0, BigDecimal::subtract);
-    public final String token;
+    public final @NotNull String token;
     public final int precedence;
-    public final BinaryOperator<BigDecimal> function;
+    public final @NotNull BinaryOperator<BigDecimal> function;
 
     Operator(String token, int precedence, BinaryOperator<BigDecimal> function) {
         this.token = token;
@@ -30,7 +27,7 @@ public enum Operator {
         this.function = function;
     }
 
-    private static @NotNull BigDecimal pow(@NotNull BigDecimal a, @NotNull BigDecimal b) {
+    private static @NotNull BigDecimal pow(BigDecimal a, BigDecimal b) {
         try {
             BigInteger bigIntegerA = a.toBigIntegerExact();
             BigInteger bigIntegerB = b.toBigIntegerExact();
@@ -42,8 +39,8 @@ public enum Operator {
         }
     }
 
-    public static BinaryOperator<BigDecimal> getFunction(String token) {
-        for (Operator op : Operator.values()) {
+    public static @NotNull BinaryOperator<BigDecimal> getFunction(String token) {
+        for (var op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.function;
             }
@@ -53,7 +50,7 @@ public enum Operator {
     }
 
     public static int getPrecedence(String token) {
-        for (Operator op : Operator.values()) {
+        for (var op : Operator.values()) {
             if (op.token.equals(token)) {
                 return op.precedence;
             }
@@ -62,24 +59,24 @@ public enum Operator {
         return -1;
     }
 
-    public static @NotNull Set<String> getOperatorTokens() {
+    public static @NotNull Set<@NotNull String> getOperatorTokens() {
         Set<String> tokens = new HashSet<>();
-        for (Operator op : Operator.values()) {
+        for (var op : Operator.values()) {
             tokens.add(op.token);
         }
 
         return tokens;
     }
 
-    public static @NotNull Collection<Set<String>> tokensGroupedByPrecedence() {
-        LinkedHashMap<Integer, Set<String>> precedenceToTokens = new LinkedHashMap<>();
-        for (Operator op : Operator.values()) {
+    public static @NotNull Collection<@NotNull Set<@NotNull String>> tokensGroupedByPrecedence() {
+        LinkedHashMap<Integer, Set<String>> precedenceToTokensSet = new LinkedHashMap<>();
+        for (var op : Operator.values()) {
             int precedence = op.precedence;
-            precedenceToTokens.putIfAbsent(precedence, new HashSet<>());
+            precedenceToTokensSet.putIfAbsent(precedence, new HashSet<>());
             String token = op.token;
-            precedenceToTokens.get(precedence).add(token);
+            precedenceToTokensSet.get(precedence).add(token);
         }
 
-        return precedenceToTokens.values();
+        return precedenceToTokensSet.values();
     }
 }
