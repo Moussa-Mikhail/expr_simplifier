@@ -1,6 +1,7 @@
 package expressionsimplifier;
 
+@SuppressWarnings("unused")
 @FunctionalInterface
-public interface Simplifier {
+interface Simplifier {
     SyntaxTree simplify(String operator, SyntaxTree left, SyntaxTree right);
 }

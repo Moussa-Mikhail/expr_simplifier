@@ -13,7 +13,7 @@ import static expressionsimplifier.Constants.*;
 /**
  * @author Moussa
  */
-public final class ExpressionLexer {
+final class ExpressionLexer {
     private final @NotNull List<@NotNull LexNode> lexNodes = new ArrayList<>();
     private final @NotNull String expr;
     private @NotNull String token = "";

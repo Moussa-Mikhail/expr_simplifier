@@ -16,7 +16,7 @@ public final class ExpressionSimplifier {
     private ExpressionSimplifier() {}
 
     @Contract(pure = true)
-    public static void main(@NotNull String... args) {
+    public static void main(String... args) {
         if (args.length == 0) {
             return;
         }
@@ -41,7 +41,7 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true, value = "_, _ -> new")
-    public static @NotNull String simplifyExpr(String expr, List<@NotNull String> variableValues) throws InvalidExpressionException {
+    static @NotNull String simplifyExpr(String expr, List<@NotNull String> variableValues) throws InvalidExpressionException {
         SyntaxTree syntaxTree = parseExpr(expr);
         Map<@NotNull String, @NotNull String> variableToValue = parseInputVariablesValues(variableValues);
 
@@ -52,7 +52,7 @@ public final class ExpressionSimplifier {
     }
 
     @Contract(pure = true, value = "_, _ -> new")
-    public static @NotNull String simplifyExpr(String expr, @NotNull String... variableValues) throws InvalidExpressionException {
+    static @NotNull String simplifyExpr(String expr, String... variableValues) throws InvalidExpressionException {
         return simplifyExpr(expr, Arrays.asList(variableValues));
     }
 
@@ -151,10 +151,6 @@ public final class ExpressionSimplifier {
         }
 
         return simplifiedTree;
-
-        // TODO: implement other simplifications
-        // double negatives
-        // and distributive property
     }
 
     @Contract(pure = true, value = "_, _, _ -> new")

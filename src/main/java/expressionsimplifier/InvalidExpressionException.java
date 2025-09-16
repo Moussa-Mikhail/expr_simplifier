@@ -1,7 +1,7 @@
 package expressionsimplifier;
 
 class InvalidExpressionException extends Exception {
-    public InvalidExpressionException(String message) {
+    InvalidExpressionException(String message) {
         super(message);
     }
 }

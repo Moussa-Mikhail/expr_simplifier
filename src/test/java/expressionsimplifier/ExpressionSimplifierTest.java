@@ -101,21 +101,21 @@ class ExpressionSimplifierTest {
 
     @ParameterizedTest
     @MethodSource("expressions")
-    void simplifyExpressionsTest(@NotNull String expr, @NotNull String expected) throws InvalidExpressionException {
+    void simplifyExpressionsTest(String expr, String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr);
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressionsWithAssignedVariables")
-    void evaluateAlgebraTest(@NotNull String expr, @NotNull List<String> variableValues, String expected) throws InvalidExpressionException {
+    void evaluateAlgebraTest(String expr, List<String> variableValues, String expected) throws InvalidExpressionException {
         String actual = ExpressionSimplifier.simplifyExpr(expr, variableValues);
         assertEquals(expected, actual);
     }
 
     @ParameterizedTest
     @MethodSource("expressions")
-    void idempotentTest(@NotNull String expr) throws InvalidExpressionException {
+    void idempotentTest(String expr) throws InvalidExpressionException {
         String simplifiedExpr = ExpressionSimplifier.simplifyExpr(expr);
         String reSimplifiedExpr = ExpressionSimplifier.simplifyExpr(simplifiedExpr);
         assertEquals(simplifiedExpr, reSimplifiedExpr);
@@ -123,7 +123,7 @@ class ExpressionSimplifierTest {
 
     @ParameterizedTest
     @MethodSource("invalidExpressions")
-    void invalidExpressionsTest(@NotNull String expr) {
+    void invalidExpressionsTest(String expr) {
         assertThrows(InvalidExpressionException.class, () -> ExpressionSimplifier.simplifyExpr(expr));
     }
 }
