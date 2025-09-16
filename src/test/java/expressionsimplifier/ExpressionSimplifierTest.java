@@ -67,7 +67,9 @@ class ExpressionSimplifierTest {
                 Arguments.of("(2x+3y-1z)^1", "2x + 3y - z"),
                 Arguments.of("(2x+3y-1z)^0", "1"),
                 Arguments.of("0^2", "0"),
-                Arguments.of("0^0", "1")
+                Arguments.of("0^0", "1"),
+                Arguments.of("-(-2)(x+y)", "2(x + y)"),
+                Arguments.of("-(x+y)(-2)", "2(x + y)")
         );
     }
 
