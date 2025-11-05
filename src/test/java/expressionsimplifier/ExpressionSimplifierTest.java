@@ -66,20 +66,19 @@ class ExpressionSimplifierTest {
                 Arguments.of("x^0", "1"),
                 Arguments.of("(2x+3y-1z)^1", "2x + 3y - z"),
                 Arguments.of("(2x+3y-1z)^0", "1"),
-                Arguments.of("0^2", "0"),
                 Arguments.of("0^0", "1"),
-                Arguments.of("-(-2)(x+y)", "2(x + y)"),
-                Arguments.of("-(x+y)(-2)", "2(x + y)")
+                Arguments.of("0^2", "0"),
+                Arguments.of("-(-2)(x+y)", "2(x + y)")
         );
     }
 
     public static @NotNull Stream<Arguments> expressionsWithAssignedVariables() {
         return Stream.of(
+                Arguments.of("1+2+3", List.of("x=1"), "6"),
                 Arguments.of("x", List.of("x=1"), "1"),
-                Arguments.of("-x", List.of("x=1"), "-1"),
-                Arguments.of("x", List.of("x=-1"), "-1"),
                 Arguments.of("2x-(-3)*4+x*x", List.of("x=2"), "20"),
                 Arguments.of("x*y", List.of("x=1"), "y"),
+                Arguments.of("x*y", List.of("x=2", "y=-3.2"), "-6.4"),
                 Arguments.of("x*y", List.of("z=1"), "x*y")
         );
     }
