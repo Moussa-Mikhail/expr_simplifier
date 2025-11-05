@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static expressionsimplifier.Constants.*;
 
@@ -139,9 +140,10 @@ public final class ExpressionSimplifier {
         SyntaxTree simplifiedTree = tree;
 
         List<@NotNull Simplifier> simplifiers = List.of(
-                ExpressionSimplifier::foldConstants,
                 ExpressionSimplifier::standardizeOrder,
+                ExpressionSimplifier::foldConstants,
                 ExpressionSimplifier::applyAlgebraicIdentities
+//                ExpressionSimplifier::foldMul
         );
 
         for (var simplifier : simplifiers) {
@@ -301,6 +303,86 @@ public final class ExpressionSimplifier {
         }
 
         return tree;
+    }
+
+    @Contract(pure = true)
+    private static @NotNull SyntaxTree foldMul(SyntaxTree tree) {
+        List<SyntaxTree> subExprs = mulFactors(tree).get(MUL);
+
+        Map<@NotNull Boolean, @NotNull List<SyntaxTree>> constantsAndExprs = subExprs.stream().collect(Collectors.partitioningBy(SyntaxTree::isNumber));
+
+        List<SyntaxTree> constants = constantsAndExprs.get(true);
+
+        BigDecimal constant = constants.stream()
+                .map(factor -> new BigDecimal(factor.getToken()))
+                .reduce(BigDecimal.ONE, BigDecimal::multiply);
+
+        var constTree = new SyntaxTree(new LexNode(constant.toString(), TokenType.NUMBER));
+
+        List<SyntaxTree> exprs = constantsAndExprs.get(false);
+
+        List<SyntaxTree> collectedPowers = collectLikePowers(exprs);
+
+        return collectedPowers.stream().reduce(constTree, (left, right) -> new SyntaxTree(LexNode.MUL, left, right));
+    }
+
+    @Contract(pure = true)
+    private static @NotNull Map<String, @NotNull List<@NotNull SyntaxTree>> mulFactors(SyntaxTree tree) {
+        if (tree.tokenTypeEquals(TokenType.OPERATOR)) {
+            assert tree.left != null && tree.right != null;
+            Map<String, @NotNull List<@NotNull SyntaxTree>> leftFactors = mulFactors(tree.left);
+            Map<String, @NotNull List<@NotNull SyntaxTree>> rightFactors = mulFactors(tree.right);
+
+            if (tree.node.equals(LexNode.MUL)) {
+                leftFactors.get(MUL).addAll(rightFactors.get(MUL));
+                leftFactors.get(DIV).addAll(rightFactors.get(DIV));
+
+                return leftFactors;
+            } else if (tree.node.equals(LexNode.DIV)) {
+                leftFactors.get(MUL).addAll(rightFactors.get(DIV));
+                leftFactors.get(DIV).addAll(rightFactors.get(MUL));
+
+                return leftFactors;
+            }
+        }
+
+        Map<String, @NotNull List<@NotNull SyntaxTree>> factors = new HashMap<>();
+        factors.put(MUL, new ArrayList<>());
+        factors.put(DIV, new ArrayList<>());
+
+        factors.get(MUL).add(tree);
+
+        return factors;
+
+    }
+
+    private static @NotNull List<SyntaxTree> collectLikePowers(List<SyntaxTree> exprs) {
+        Map<SyntaxTree, BigDecimal> baseToPower = new LinkedHashMap<>();
+
+        for (SyntaxTree expr : exprs) {
+            if (expr.node.equals(LexNode.POW)) {
+                assert expr.left != null && expr.right != null;
+                BigDecimal power = new BigDecimal(expr.right.getToken());
+                baseToPower.merge(expr.left, power, BigDecimal::add);
+            } else if (expr.node.equals(LexNode.DIV)) {
+                assert expr.left != null && expr.right != null;
+
+            } else {
+                baseToPower.merge(expr, BigDecimal.ONE, BigDecimal::add);
+            }
+        }
+
+        return baseToPower.entrySet().stream().map(
+                entry -> {
+                    SyntaxTree base = entry.getKey();
+                    BigDecimal pow = entry.getValue();
+                    if (pow.compareTo(BigDecimal.ONE) == 0) {
+                        return base;
+                    }
+
+                    var powNode = new LexNode(pow.toString(), TokenType.NUMBER);
+                    return new SyntaxTree(LexNode.POW, base, new SyntaxTree(powNode));
+                }).collect(Collectors.toList());
     }
 
     @Contract(pure = true, value = "_ -> new")

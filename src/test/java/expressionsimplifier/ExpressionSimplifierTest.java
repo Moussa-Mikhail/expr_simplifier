@@ -69,6 +69,8 @@ class ExpressionSimplifierTest {
                 Arguments.of("0^0", "1"),
                 Arguments.of("0^2", "0"),
                 Arguments.of("-(-2)(x+y)", "2(x + y)")
+//                Arguments.of("-(x+y)(-2)", "2(x + y)"),
+//                Arguments.of("x*2*2*2*x", "8x^2")
         );
     }
 
