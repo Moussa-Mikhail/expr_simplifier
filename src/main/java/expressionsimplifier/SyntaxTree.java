@@ -11,6 +11,8 @@ final class SyntaxTree {
     public final @NotNull LexNode node;
     public final @Nullable SyntaxTree left;
     public final @Nullable SyntaxTree right;
+    public static final SyntaxTree ZERO = new SyntaxTree(LexNode.ZERO);
+    public static final SyntaxTree ONE = new SyntaxTree(LexNode.ONE);
 
     public SyntaxTree(LexNode node) {
         this.node = node;
@@ -19,8 +21,8 @@ final class SyntaxTree {
     }
 
     public SyntaxTree(LexNode node, @Nullable SyntaxTree left, @Nullable SyntaxTree right) {
-        boolean bothNonNull = left != null && right != null;
-        if (node.type == TokenType.OPERATOR && !bothNonNull) {
+        boolean hasNullChild = left == null || right == null;
+        if (node.type == TokenType.OPERATOR && hasNullChild) {
             throw new IllegalArgumentException("Operator nodes must have non-null children");
         }
 
@@ -109,23 +111,21 @@ final class SyntaxTree {
         assert left != null;
         assert right != null;
 
-        boolean isRightVariable = right.tokenTypeEquals(TokenType.VARIABLE);
-        if (left.getToken().equals(NEGATIVE_ONE) && isRightVariable) {
+        boolean isRightVariableOrPower = right.tokenTypeEquals(TokenType.VARIABLE) || right.getToken().equals(POW);
+        if (left.getToken().equals(NEGATIVE_ONE) && isRightVariableOrPower) {
             return String.format("-%s", right);
         }
 
         boolean isLeftNumber = left.tokenTypeEquals(TokenType.NUMBER);
-        if (isLeftNumber && isRightVariable) {
+        if (isLeftNumber && isRightVariableOrPower ) {
             return String.format("%s%s", left, right);
         }
 
-        boolean isLeftLeaf = left.isLeaf();
-        boolean isRightLeaf = right.isLeaf();
-        if (isLeftNumber && !isRightLeaf) {
+        if (isLeftNumber && !right.isLeaf()) {
             return String.format("%s(%s)", left, right);
         }
 
-        if (!(isLeftLeaf || isRightLeaf)) {
+        if (!(left.isLeaf() || right.isLeaf())) {
             return String.format("(%s)(%s)", left, right);
         }
 
@@ -177,7 +177,7 @@ final class SyntaxTree {
         if (left.isLeaf() && right.isLeaf()) {
             if (node.token.equals(POW)) {
                 if (left.expressionTypeEquals(ExpressionType.VARIABLE) && right.expressionTypeEquals(ExpressionType.NUMBER)) {
-                    return ExpressionType.POLY;
+                    return ExpressionType.UNIPOLY;
                 }
 
                 if (left.expressionTypeEquals(ExpressionType.NUMBER) && !right.expressionTypeEquals(ExpressionType.NUMBER)) {
